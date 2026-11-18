@@ -1,4 +1,4 @@
-# Katatay
+# 🏔️ Katatay
 
 > **Alpha.** This is an alpha release, built to test the concept. Expect rough
 > edges and breaking changes between releases. Read
@@ -21,7 +21,37 @@ agent ask it before every file write and shell command, and at the end of every
 turn. The referee answers from the state of the change and the results of
 the checks it ran. Nothing the agent writes in the chat changes the answer.
 
-What you get:
+See [What you get](#what-you-get) for what this gives you,
+[How a change runs](#how-a-change-runs) for the steps every change goes
+through, and [Features](#features) for how each part works.
+
+## 3 easy steps to get you running with Katatay
+
+1. **Install Katatay.** In a terminal:
+
+   ```sh
+   url="https://github.com/lokito-ltd/katatay-alpha/releases/download/v0.1.0/katatay-0.1.0.tgz"
+   npm install -g --foreground-scripts --allow-scripts="$url" "$url"
+   ktty version
+   ```
+
+   See [Install](#install) for what this does and what you need.
+
+2. **Set up your project.** Open a new Claude Code or Codex session in your
+   project and ask:
+
+   > Use the ktty-init skill to set up Katatay in this project.
+
+   See [Set up a project](#set-up-a-project).
+
+3. **Start adding requirements.** On a new Git branch, tell the agent what
+   your product should do:
+
+   > Add a requirement: a customer can cancel an order until it ships.
+
+   See [Your first requirement](#your-first-requirement).
+
+## What you get
 
 - **You approve the plan before any code is written.** The agent says what it
   will change and which tests it expects to break. Your approval is recorded
@@ -45,19 +75,43 @@ What you get:
   mutation report format, which most test tools can write. Claude Code and
   Codex are supported today.
 
-Katatay runs on Node.js 22.12 or later and uses Git. It is tested on Node.js
-24 and later. The command is `ktty`.
-
 ## Install
 
-Install from a GitHub Release into your user-owned global npm prefix, with its
-bin directory on `PATH` for your shell and for both agents:
+You need Node.js 22.12 or later, and Git. Katatay is tested on Node.js 24 and
+later. The command is `ktty`.
+
+Install from a GitHub Release:
 
 ```sh
 url="https://github.com/lokito-ltd/katatay-alpha/releases/download/v0.1.0/katatay-0.1.0.tgz"
 npm install -g --foreground-scripts --allow-scripts="$url" "$url"
 ktty version
 ```
+
+What each line does:
+
+- The first line names the release file on GitHub.
+- The second installs it as a global npm package, which gives you the `ktty`
+  command. `--allow-scripts` lets this one package run its install script,
+  and `--foreground-scripts` shows you what that script prints.
+- `ktty version` checks it worked. It prints the Katatay release and the
+  rulebook schema version.
+
+The install script copies the setup skill, **ktty-init**, into the Claude Code
+and Codex user skill folders, so both agents can find it. It respects
+`CLAUDE_CONFIG_DIR` and `CODEX_HOME`. If a different `ktty-init` skill is
+already there, the installer says where and keeps that file.
+
+Two things to check:
+
+- **Your user owns npm's global folder.** `npm prefix -g` prints it. If
+  installing needs `sudo`, point npm at a folder in your home directory
+  first, for example with `npm config set prefix ~/.npm-global`.
+- **`ktty` is on `PATH` for your shell and for both agents.** The agents'
+  hooks call `ktty`, so the agents must find it too. The command lives in the
+  `bin` folder inside the npm prefix.
+
+### Installing from a file
 
 To install a tarball you built or downloaded, give npm its **absolute** path.
 npm 11 reads a relative path such as `dist/katatay-0.1.0.tgz` as a Git
@@ -68,27 +122,40 @@ archive="$PWD/dist/katatay-0.1.0.tgz"
 npm install -g --foreground-scripts --allow-scripts="file:$archive" "$archive"
 ```
 
-`ktty version` prints the Katatay release and the rulebook schema.
+### Finding the installed files
+
 `ktty path` prints the absolute folder the package is installed in, on one
 line with no trailing slash, so a project can name the files it ships, such as
 `"$(ktty path)/src/adapters/typescript/vitest-junit-reporter.js"`.
 
-The install script puts the setup skill in the Claude Code and Codex user skill
-folders. It respects `CLAUDE_CONFIG_DIR` and `CODEX_HOME`. If a different
-`ktty-init` skill is already there, the installer says where and keeps that
-file.
+### Another checkout or machine
+
+To use a set-up project in a new checkout or on another machine, install the
+same release there and put `ktty` on the agents' `PATH`.
 
 ## Set up a project
 
-Open a new Claude Code or Codex session in the Git project and ask it to use
-the **ktty-init** skill. It interviews you about your tools, proves the checks
-with passing and failing examples, then runs `ktty init` and shows the steps
-that are yours, including trusting the hooks. To set up by hand, run
-`ktty init` in a terminal, or `ktty init --questions` to see the settings.
+Open a **new** Claude Code or Codex session in your project's Git folder. It
+must be a new session, because agents load skills when a session starts. Then
+ask it to use the **ktty-init** skill. The skill does the setup with you:
 
-After setup, run `ktty verify` in the project. To use the project in a new
-checkout or on another machine, install the same release there and put `ktty`
-on the agents' `PATH`.
+1. It reads your project and asks about your tools: the language, how you
+   compile, run tests, measure coverage and run any other checks.
+2. It proves each check works, with a passing and a failing example, so a
+   check that can never fail is caught now.
+3. It runs `ktty init`, which writes the **rulebook**
+   (`.katatay/rulebook.json`, the file holding your commands and limits), the
+   requirements folder, and the agent's hooks and instructions.
+4. It shows you the steps only you can do, including trusting the hooks.
+
+When it finishes, run `ktty verify` in the project. It runs every check the
+way the referee will, so you start from a clean result.
+
+From then on the project is guarded: the agent cannot write files until you
+approve a plan.
+
+To set up by hand, run `ktty init` in a terminal, or `ktty init --questions`
+to see the settings.
 
 ### TypeScript projects
 
@@ -101,6 +168,46 @@ the project's own tools:
 - Mutation testing needs the project's own Stryker 10 packages
   (`@stryker-mutator/core`, `api` and `vitest-runner`). The command is
   `node "$(ktty path)/src/adapters/typescript/stryker-mutate.js" --vitest-config <config>`.
+
+## Your first requirement
+
+A **requirement** is one sentence about how your product behaves, such as
+"A customer can cancel an order until it ships". Under it sit
+**scenarios**: single cases, each proved by a test that has the scenario's
+text as its name. The referee checks that every requirement has its tests, and
+that none is weakened without your approval.
+
+Each change runs on its own Git branch, and a plan on the target branch is
+refused. So make a branch first:
+
+```sh
+git switch -c order-cancellation
+```
+
+Then tell the agent what you want, in plain words:
+
+> Add a requirement: a customer can cancel an order until it ships.
+
+The agent writes the requirement and a plan for building it. You read the plan
+and approve it, or send it back. From there the referee takes the change
+through the steps in [How a change runs](#how-a-change-runs). The requirement
+lands in `requirements/acceptance/`, and looks like this:
+
+```markdown
+---
+status: accepted
+---
+
+A customer can cancel an order until it ships.
+
+## Scenarios
+
+- [AC0001.1] A cancelled order is not shipped.
+- [AC0001.2] An order that has shipped cannot be cancelled.
+```
+
+See [Requirements as living documentation](#requirements-as-living-documentation)
+for how requirements and their tests stay in step.
 
 ## How a change runs
 

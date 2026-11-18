@@ -1,4 +1,4 @@
-# 🏔️ Katatay
+# <img src="docs/katatay-header.png" alt="Katatay" width="100%">
 
 > **Alpha.** This is an alpha release, built to test the concept. Expect rough
 > edges and breaking changes between releases. Read

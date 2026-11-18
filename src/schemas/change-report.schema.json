@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "change-report.schema.json",
+  "title": "Saved change report, version 1",
+  "type": "object",
+  "properties": {
+    "version": {"const": 1},
+    "treeFingerprint": {"$ref": "verified.schema.json#/$defs/fingerprint"},
+    "decision": {"enum": ["record_held", "declared"]},
+    "lines": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string"},
+      "contains": {"type": "string", "pattern": "\\S"}
+    },
+    "summary": {"$ref": "#/$defs/summary"},
+    "gaps": {"$ref": "#/$defs/gaps"}
+  },
+  "required": ["version", "treeFingerprint", "decision", "lines", "summary", "gaps"],
+  "additionalProperties": false,
+  "$defs": {
+    "summary": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "not": {"pattern": "[\\r\\n]"}},
+      "contains": {"type": "string", "pattern": "\\S"}
+    },
+    "gaps": {
+      "type": "object",
+      "properties": {
+        "uncoveredLines": {"type": "integer", "minimum": 0, "maximum": 9007199254740991},
+        "uncaughtMutants": {"type": "integer", "minimum": 0, "maximum": 9007199254740991}
+      },
+      "additionalProperties": false
+    },
+    "snapshot": {
+      "type": "string",
+      "pattern": "^\\.katatay/local/[^/]+/change-report/\\d{8}T\\d{6}\\.\\d{3}Z_[\\w-]{43}\\.json$"
+    }
+  }
+}

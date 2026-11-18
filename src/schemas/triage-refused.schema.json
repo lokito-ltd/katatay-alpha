@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "triage-refused.schema.json",
+  "title": "Written triage_refused event, version 1",
+  "type": "object",
+  "properties": {
+    "version": {"const": 1},
+    "seq": {"type": "integer", "minimum": 1, "maximum": 9999},
+    "ts": {"type": "string", "pattern": "^\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\d\\.\\d{3}Z$"},
+    "prev": {"oneOf": [{"type": "null"}, {"type": "string", "pattern": "^[a-f0-9]{64}$"}]},
+    "branch": {"type": "string", "pattern": "\\S"},
+    "event": {"const": "triage_refused"},
+    "payload": {
+      "oneOf": [
+        {"$ref": "#/$defs/implementationChanged"},
+        {"$ref": "#/$defs/measurementChanged"},
+        {"$ref": "#/$defs/invalidTestRun"},
+        {"$ref": "#/$defs/snapshotFailed"},
+        {"$ref": "#/$defs/testsModified"},
+        {"$ref": "#/$defs/typecheckFailed"},
+        {"$ref": "#/$defs/suiteNotGreen"}
+      ]
+    }
+  },
+  "required": ["version", "seq", "ts", "prev", "event", "payload"],
+  "additionalProperties": false,
+  "if": {"properties": {"seq": {"const": 1}}},
+  "then": {"required": ["branch"], "properties": {"prev": {"type": "null"}}},
+  "else": {"properties": {"prev": {"type": "string", "pattern": "^[a-f0-9]{64}$"}, "branch": false}},
+  "$defs": {
+    "text": {"type": "string", "pattern": "\\S"},
+    "names": {"type": "array", "items": {"$ref": "#/$defs/text"}, "minItems": 1},
+    "rawEvidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "role": {"const": "raw"},
+          "title": {"$ref": "#/$defs/text"},
+          "snapshot": {"type": "string", "pattern": "^\\.katatay/local/[^/]+/(?:[^/]+/)+\\d{8}T\\d{6}\\.\\d{3}Z_[\\w-]{43}\\.\\w+$"}
+        },
+        "required": ["role", "title", "snapshot"],
+        "additionalProperties": false
+      }
+    },
+    "implementationChanged": {
+      "type": "object",
+      "properties": {"reason": {"const": "implementation_changed"}},
+      "required": ["reason"],
+      "additionalProperties": false
+    },
+    "measurementChanged": {
+      "type": "object",
+      "properties": {"reason": {"const": "measurement_changed"}, "evidence": {"$ref": "#/$defs/rawEvidence"}},
+      "required": ["reason", "evidence"],
+      "additionalProperties": false
+    },
+    "invalidTestRun": {
+      "type": "object",
+      "properties": {
+        "reason": {"const": "invalid_test_run"}, "message": {"$ref": "#/$defs/text"},
+        "evidence": {"$ref": "#/$defs/rawEvidence"}
+      },
+      "required": ["reason", "message", "evidence"],
+      "additionalProperties": false
+    },
+    "snapshotFailed": {
+      "type": "object",
+      "properties": {
+        "reason": {"const": "snapshot_failed"}, "message": {"$ref": "#/$defs/text"},
+        "evidence": {"$ref": "#/$defs/rawEvidence"}
+      },
+      "required": ["reason", "message", "evidence"],
+      "additionalProperties": false
+    },
+    "testsModified": {
+      "type": "object",
+      "properties": {"reason": {"const": "tests_modified"}, "files": {"$ref": "#/$defs/names"}},
+      "required": ["reason", "files"],
+      "additionalProperties": false
+    },
+    "typecheckFailed": {
+      "type": "object",
+      "properties": {"reason": {"const": "typecheck_failed"}, "files": {"$ref": "#/$defs/names"}},
+      "required": ["reason", "files"],
+      "additionalProperties": false
+    },
+    "suiteNotGreen": {
+      "type": "object",
+      "properties": {
+        "reason": {"const": "suite_not_green"}, "failures": {"$ref": "#/$defs/names"},
+        "evidence": {"$ref": "#/$defs/rawEvidence"}
+      },
+      "required": ["reason", "failures", "evidence"],
+      "additionalProperties": false
+    }
+  }
+}

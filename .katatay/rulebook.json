@@ -1,0 +1,185 @@
+{
+  "version": 1,
+  "targetBranch": "origin/main",
+  "tests": {
+    "paths": {
+      "all": [
+        "**/*.test.{ts,tsx,mjs}"
+      ],
+      "acceptance": [
+        "**/acceptance/**",
+        "**/*.acceptance.*"
+      ],
+      "slow": [
+        "**/perf/**",
+        "tests/integration/**",
+        "tests/hooks/**",
+        "tests/machine/**",
+        "tests/acceptance/**"
+      ],
+      "support": [
+        "tests/**"
+      ]
+    },
+    "run": {
+      "command": "rm -f coverage/lcov.info && npm test",
+      "reportPaths": [
+        "reports/junit/*.xml"
+      ],
+      "tagComment": "^\\s*//"
+    }
+  },
+  "code": {
+    "paths": [
+      "**/*.{js,jsx,cjs,mjs,ts,tsx,cts,mts}"
+    ],
+    "compile": {
+      "command": "npm run --silent typecheck -- --pretty false --incremental false",
+      "pattern": "^(?<file>\\S.*?)\\((?<line>\\d+),\\d+\\): error (?<message>TS\\d+: .*)$",
+      "exitCodes": {
+        "0": "clean",
+        "1": "errors"
+      }
+    }
+  },
+  "agent": {
+    "lockedPaths": [
+      ".claude/settings.json",
+      ".claude/settings.local.json",
+      ".claude/hooks/**",
+      "~/.claude/settings.json",
+      ".codex/**",
+      "~/.codex/config.toml",
+      "~/.codex/hooks.json",
+      "~/.codex/sessions/**"
+    ],
+    "adapters": {
+      "claude": {
+        "checkCommand": "node src/agents/claude/check.mjs",
+        "extraHooks": {
+          "check": true,
+          "acknowledged": [
+            {"event": "PreToolUse", "matcher": "Bash", "command": "rtk hook claude"},
+            {"event": "Notification", "matcher": "", "command": "~/.config/iterm2/cc-status"},
+            {"event": "PermissionRequest", "matcher": "", "command": "~/.config/iterm2/cc-status"},
+            {"event": "PostToolUse", "matcher": "", "command": "~/.config/iterm2/cc-status"},
+            {"event": "PreToolUse", "matcher": "", "command": "~/.config/iterm2/cc-status"},
+            {"event": "SessionEnd", "matcher": "", "command": "~/.config/iterm2/cc-status"},
+            {"event": "SessionStart", "matcher": "", "command": "~/.config/iterm2/cc-status"},
+            {"event": "Stop", "matcher": "", "command": "~/.config/iterm2/cc-status"},
+            {"event": "StopFailure", "matcher": "", "command": "~/.config/iterm2/cc-status"},
+            {"event": "SubagentStop", "matcher": "", "command": "~/.config/iterm2/cc-status"},
+            {"event": "UserPromptSubmit", "matcher": "", "command": "~/.config/iterm2/cc-status"}
+          ]
+        }
+      },
+      "codex": {
+        "checkCommand": "node src/agents/codex/check.mjs",
+        "extraHooks": {
+          "check": true,
+          "acknowledged": []
+        }
+      }
+    }
+  },
+  "plans": {
+    "dir": "~/.claude/plans"
+  },
+  "followUpsFile": "FOLLOW-UPS.md",
+  "highRisk": [
+    {
+      "paths": [
+        ".github/**",
+        ".claude/**",
+        ".githooks/**"
+      ],
+      "why": "These change what does the checking. Read them whatever the tests say."
+    },
+    {
+      "paths": [
+        "package.json",
+        "package-lock.json",
+        "tsconfig.json",
+        "vitest.config.ts",
+        "tests/integration/vitest.config.test.ts",
+        "vitest.mutate.config.ts",
+        ".dependency-cruiser.cjs",
+        "tests/integration/dependency-cruiser.test.ts",
+        ".gitleaks.toml"
+      ],
+      "why": "These decide what the checks see. Narrowing them hides failures and no check notices."
+    }
+  ],
+  "checks": {
+    "testQuality": {
+      "coverage": {
+        "command": "cat coverage/lcov.info",
+        "output": "reports/checks/coverage.json",
+        "minimum": {
+          "src/": {
+            "lines": 100,
+            "branches": 100
+          },
+          "src/adapters/": {
+            "lines": 93.5,
+            "branches": 92.5
+          },
+          "src/evidence/": {
+            "lines": 96,
+            "branches": 93.5
+          },
+          "src/requirements/": {
+            "lines": 96,
+            "branches": 90.5
+          },
+          "src/workflow/": {
+            "lines": 89.5,
+            "branches": 87.5
+          },
+          "src/agents/": {
+            "lines": 71,
+            "branches": 75
+          }
+        },
+        "suppressions": [
+          "(?:istanbul|v8|c8|node:coverage)\\s+ignore\\b"
+        ]
+      },
+      "mutation": {
+        "command": "npx tsx src/adapters/typescript/stryker-mutate.ts --vitest-config vitest.mutate.config.ts",
+        "output": "reports/mutation/mutation.json",
+        "timeLimitSeconds": 240,
+        "skipInCi": true,
+        "excludePaths": [
+          "vitest.config.ts",
+          "vitest.mutate.config.ts",
+          ".dependency-cruiser.cjs"
+        ],
+        "suppressions": [
+          "\\bStryker\\s+disable\\b"
+        ]
+      }
+    },
+    "codeQuality": {
+      "boundaries": {
+        "command": "npm run --silent boundaries",
+        "exitCodes": {
+          "0": "clean",
+          "1-255": "findings"
+        }
+      },
+      "secrets": {
+        "command": "npm run --silent secrets",
+        "exitCodes": {
+          "0": "clean",
+          "2": "findings"
+        },
+        "onFailure": "block",
+        "suppressions": [
+          "gitleaks:allow"
+        ]
+      }
+    }
+  },
+  "requirementsDir": "requirements/"
+}

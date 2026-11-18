@@ -1,0 +1,168 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "check-result.schema.json",
+  "title": "Check result document, version 1",
+  "description": "What the referee writes to a check's output file, and keeps as the analysis snapshot of tests, coverage, mutation and ordinary checks.",
+  "type": "object",
+  "properties": {
+    "version": {"const": 1},
+    "name": {"type": "string", "pattern": "\\S"},
+    "result": {
+      "type": "object",
+      "properties": {
+        "outcome": {"enum": ["clean", "findings", "broken", "skipped"]},
+        "exitCode": {"oneOf": [{"type": "null"}, {"type": "integer", "minimum": 0, "maximum": 255}]},
+        "text": {"type": "string"},
+        "reason": {"type": "string"}
+      },
+      "required": ["outcome", "exitCode", "text", "reason"],
+      "additionalProperties": false
+    },
+    "measurement": {"type": "object"}
+  },
+  "required": ["version", "name", "result"],
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {"properties": {"name": {"const": "coverage"}}},
+      "then": {"required": ["measurement"], "properties": {"measurement": {"$ref": "#/$defs/coverage"}}}
+    },
+    {
+      "if": {"properties": {"name": {"const": "mutation"}}},
+      "then": {"required": ["measurement"], "properties": {"measurement": {"$ref": "#/$defs/mutation"}}}
+    },
+    {
+      "if": {"properties": {"name": {"const": "tests"}}},
+      "then": {"required": ["measurement"], "properties": {"measurement": {"$ref": "#/$defs/tests"}}}
+    }
+  ],
+  "$defs": {
+    "text": {"type": "string", "pattern": "\\S"},
+    "count": {"type": "integer", "minimum": 0},
+    "positive": {"type": "integer", "minimum": 1},
+    "figures": {
+      "description": "Covered and total counts, and the measured figure and minimum in integer tenths of a percent.",
+      "type": "object",
+      "properties": {
+        "covered": {"$ref": "#/$defs/count"}, "total": {"$ref": "#/$defs/count"},
+        "measured": {"$ref": "#/$defs/count"}, "minimum": {"type": "integer", "minimum": 0, "maximum": 1000}
+      },
+      "required": ["covered", "total", "measured", "minimum"],
+      "additionalProperties": false
+    },
+    "coverage": {
+      "type": "object",
+      "properties": {
+        "folders": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "folder": {"$ref": "#/$defs/text"}, "files": {"$ref": "#/$defs/count"},
+              "lines": {"$ref": "#/$defs/figures"}, "branches": {"$ref": "#/$defs/figures"}
+            },
+            "required": ["folder", "files", "lines", "branches"],
+            "additionalProperties": false
+          }
+        },
+        "failures": {"type": "array", "items": {"$ref": "#/$defs/text"}},
+        "touched": {
+          "description": "The executable lines touched since the baseline, or null without a baseline.",
+          "oneOf": [
+            {"type": "null"},
+            {
+              "type": "object",
+              "properties": {
+                "covered": {"$ref": "#/$defs/count"}, "total": {"$ref": "#/$defs/count"},
+                "uncovered": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {"file": {"$ref": "#/$defs/text"}, "lines": {"type": "array", "items": {"$ref": "#/$defs/positive"}}},
+                    "required": ["file", "lines"],
+                    "additionalProperties": false
+                  }
+                }
+              },
+              "required": ["covered", "total", "uncovered"],
+              "additionalProperties": false
+            }
+          ]
+        }
+      },
+      "required": ["folders", "failures", "touched"],
+      "additionalProperties": false
+    },
+    "point": {
+      "type": "object",
+      "properties": {"line": {"$ref": "#/$defs/positive"}, "column": {"$ref": "#/$defs/positive"}},
+      "required": ["line", "column"],
+      "additionalProperties": false
+    },
+    "mutation": {
+      "type": "object",
+      "properties": {
+        "toolOutcome": {"enum": ["clean", "survived", "nothing"]},
+        "findings": {
+          "type": "object",
+          "properties": {
+            "partial": {"type": "boolean"},
+            "counts": {
+              "type": "object",
+              "properties": {
+                "total": {"$ref": "#/$defs/count"}, "caught": {"$ref": "#/$defs/count"},
+                "survived": {"$ref": "#/$defs/count"}, "unproven": {"$ref": "#/$defs/count"},
+                "statuses": {
+                  "type": "object",
+                  "properties": {
+                    "Killed": {"$ref": "#/$defs/count"}, "Survived": {"$ref": "#/$defs/count"},
+                    "NoCoverage": {"$ref": "#/$defs/count"}, "CompileError": {"$ref": "#/$defs/count"},
+                    "RuntimeError": {"$ref": "#/$defs/count"}, "Timeout": {"$ref": "#/$defs/count"},
+                    "Ignored": {"$ref": "#/$defs/count"}, "Pending": {"$ref": "#/$defs/count"}
+                  },
+                  "required": ["Killed", "Survived", "NoCoverage", "CompileError", "RuntimeError", "Timeout", "Ignored", "Pending"],
+                  "additionalProperties": false
+                }
+              },
+              "required": ["total", "caught", "survived", "unproven", "statuses"],
+              "additionalProperties": false
+            },
+            "survivors": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "file": {"$ref": "#/$defs/text"}, "id": {"type": "string"}, "mutator": {"type": "string"},
+                  "location": {
+                    "type": "object",
+                    "properties": {"start": {"$ref": "#/$defs/point"}, "end": {"$ref": "#/$defs/point"}},
+                    "required": ["start", "end"],
+                    "additionalProperties": false
+                  },
+                  "replacement": {"type": "string"},
+                  "sourceLine": {"type": "string", "pattern": "^[^\\r\\n]*$"}
+                },
+                "required": ["file", "id", "mutator", "location"],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": ["counts", "survivors"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["toolOutcome", "findings"],
+      "additionalProperties": false
+    },
+    "tests": {
+      "type": "object",
+      "properties": {
+        "reports": {"type": "array", "items": {"type": "string"}},
+        "cases": {"type": "array", "items": {"type": "object"}},
+        "leftOut": {"type": "array", "items": {"type": "object"}}
+      },
+      "required": ["reports", "cases", "leftOut"],
+      "additionalProperties": false
+    }
+  }
+}

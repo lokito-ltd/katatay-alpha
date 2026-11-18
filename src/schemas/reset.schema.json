@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "reset.schema.json",
+  "title": "Written reset event, version 1",
+  "type": "object",
+  "properties": {
+    "version": {"const": 1},
+    "seq": {"type": "integer", "minimum": 1, "maximum": 9999},
+    "ts": {"$ref": "verified.schema.json#/$defs/timestamp"},
+    "prev": {"oneOf": [{"type": "null"}, {"$ref": "verified.schema.json#/$defs/fingerprint"}]},
+    "branch": {"type": "string", "pattern": "\\S"},
+    "event": {"const": "reset"},
+    "payload": {
+      "type": "object",
+      "properties": {
+        "note": {"type": ["string", "null"]},
+        "changeFiles": {"type": "array", "minItems": 1, "items": {"type": "string", "pattern": "\\S"}}
+      },
+      "required": ["note"],
+      "additionalProperties": false
+    }
+  },
+  "required": ["version", "seq", "ts", "prev", "event", "payload"],
+  "additionalProperties": false,
+  "if": {
+    "properties": {"seq": {"const": 1}}
+  },
+  "then": {
+    "required": ["branch"],
+    "properties": {"prev": {"type": "null"}}
+  },
+  "else": {
+    "properties": {"prev": {"$ref": "verified.schema.json#/$defs/fingerprint"}, "branch": false}
+  }
+}

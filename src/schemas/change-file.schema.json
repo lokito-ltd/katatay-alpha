@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "change-file.schema.json",
+  "title": "Change file frontmatter, version 1",
+  "description": "The YAML frontmatter of a change file under the requirements folder's changes/. Each entry states a requirement the change leaves behind, in full. An entry that does not match accounts for nothing. Omit requirements when the change touches none.",
+  "type": "object",
+  "properties": {
+    "requirements": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {"$ref": "requirement.schema.json#/$defs/id"},
+          "renumberedFrom": {"$ref": "requirement.schema.json#/$defs/id", "description": "The id this requirement had before a renumber. Of the same type as id, and different from it."},
+          "status": {"$ref": "requirement.schema.json#/$defs/status"},
+          "statement": {"type": "string", "pattern": "\\S", "description": "The resulting statement, word for word."},
+          "scenarios": {"type": "array", "items": {"$ref": "requirement.schema.json#/$defs/scenario"}, "description": "Every scenario the requirement has, each once. Left out when it has none."}
+        },
+        "required": ["id", "status", "statement"]
+      }
+    }
+  }
+}

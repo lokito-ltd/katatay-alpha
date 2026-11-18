@@ -1,0 +1,38 @@
+{
+  "description": "The workflow's hooks. See src/agents/README.md.",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "apply_patch|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$(git rev-parse --show-toplevel)/src/agents/codex/hooks/pre-tool.mjs\""
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$(git rev-parse --show-toplevel)/src/agents/codex/hooks/user-prompt.mjs\"",
+            "additionalContextLimit": 0
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$(git rev-parse --show-toplevel)/src/agents/codex/hooks/turn-end.mjs\"",
+            "timeout": 900
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,261 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "rulebook.schema.json",
+  "title": "Katatay rulebook, version 1",
+  "description": "Structural settings. Katatay also checks project paths, glob and regular expression syntax, exit-code ranges and meanings, unique check names and outputs, and the Git remote.",
+  "type": "object",
+  "properties": {
+    "version": {"const": 1},
+    "targetBranch": {"type": "string", "pattern": "^[^/]+/[\\s\\S]+$"},
+    "tests": {
+      "type": "object",
+      "properties": {
+        "paths": {
+          "type": "object",
+          "properties": {
+            "all": {"type": "array", "items": {"type": "string", "minLength": 1}, "minItems": 1},
+            "acceptance": {"type": "array", "items": {"type": "string", "minLength": 1}, "minItems": 1},
+            "slow": {"type": "array", "items": {"type": "string", "minLength": 1}},
+            "support": {"type": "array", "items": {"type": "string", "minLength": 1}}
+          },
+          "required": ["all", "acceptance", "support"],
+          "additionalProperties": false
+        },
+        "run": {
+          "type": "object",
+          "properties": {
+            "command": {"type": "string", "pattern": "\\S"},
+            "reportPaths": {
+              "type": "array",
+              "items": {"type": "string", "pattern": "^[^/*?{]+(?:/|$)"},
+              "minItems": 1
+            },
+            "tagComment": {"type": "string", "minLength": 1}
+          },
+          "required": ["command", "reportPaths", "tagComment"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["paths", "run"],
+      "additionalProperties": false
+    },
+    "code": {
+      "type": "object",
+      "properties": {
+        "paths": {"type": "array", "items": {"type": "string", "minLength": 1}, "minItems": 1},
+        "compile": {
+          "oneOf": [
+            {"const": "none"},
+            {
+              "type": "object",
+              "properties": {
+                "command": {"type": "string", "pattern": "\\S"},
+                "pattern": {
+                  "type": "string",
+                  "minLength": 1,
+                  "allOf": [{"pattern": "\\(\\?<file>"}, {"pattern": "\\(\\?<message>"}]
+                },
+                "exitCodes": {
+                  "type": "object",
+                  "minProperties": 2,
+                  "propertyNames": {
+                    "type": "string",
+                    "pattern": "^(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])(?:-(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9]))?$"
+                  },
+                  "additionalProperties": {"enum": ["clean", "errors", "broken"]}
+                }
+              },
+              "required": ["command", "pattern", "exitCodes"],
+              "additionalProperties": false
+            }
+          ]
+        }
+      },
+      "required": ["paths", "compile"],
+      "additionalProperties": false
+    },
+    "agent": {
+      "type": "object",
+      "properties": {
+        "lockedPaths": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "adapters": {
+          "type": "object",
+          "minProperties": 1,
+          "propertyNames": {"type": "string", "pattern": "\\S"},
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "checkCommand": {"type": "string", "pattern": "\\S"},
+              "extraHooks": {
+                "type": "object",
+                "properties": {
+                  "check": {"type": "boolean"},
+                  "acknowledged": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "event": {"type": "string", "minLength": 1},
+                        "matcher": {"type": "string"},
+                        "command": {"type": "string", "minLength": 1}
+                      },
+                      "required": ["event", "command"],
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                "required": [],
+                "additionalProperties": false
+              }
+            },
+            "required": ["checkCommand"],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": ["lockedPaths", "adapters"],
+      "additionalProperties": false
+    },
+    "plans": {
+      "type": "object",
+      "properties": {
+        "dir": {"type": "string", "pattern": "\\S", "not": {"pattern": "\\\\"}},
+        "validateFormat": {"type": "boolean"}
+      },
+      "required": ["dir"],
+      "additionalProperties": false
+    },
+    "followUpsFile": {
+      "type": "string",
+      "pattern": "^(?!~)(?!.*\\\\)(?!(?:.*/)?\\.{1,2}(?:/|$))(?:[^/]+/)*[^/]*\\.md$"
+    },
+    "highRisk": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "paths": {"type": "array", "items": {"type": "string", "minLength": 1}, "minItems": 1},
+          "why": {"type": "string", "pattern": "\\S"}
+        },
+        "required": ["paths", "why"],
+        "additionalProperties": false
+      }
+    },
+    "requirementsDir": {"type": "string", "pattern": "^(?!.*\\\\)(?!(?:.*/)?\\.{1,2}(?:/|$))[^/]+(?:/[^/]+)*/*$"},
+    "checks": {
+      "type": "object",
+      "properties": {
+        "testQuality": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "pattern": "\\S",
+            "not": {"enum": ["req:lint", "req:guard", "state:verify", "compile", "tests", "req:trace"]}
+          },
+          "additionalProperties": {"$ref": "#/$defs/check"},
+          "properties": {
+            "coverage": {"oneOf": [{"const": "none"}, {"$ref": "#/$defs/coverage"}]},
+            "mutation": {"oneOf": [{"const": "none"}, {"$ref": "#/$defs/mutation"}]}
+          },
+          "required": ["coverage", "mutation"]
+        },
+        "codeQuality": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "pattern": "\\S",
+            "not": {
+              "enum": [
+                "req:lint",
+                "req:guard",
+                "state:verify",
+                "compile",
+                "tests",
+                "req:trace",
+                "coverage",
+                "mutation"
+              ]
+            }
+          },
+          "additionalProperties": {"$ref": "#/$defs/check"}
+        },
+        "requireAnalysis": {"type": "boolean"}
+      },
+      "required": ["testQuality"],
+      "additionalProperties": false
+    }
+  },
+  "required": ["version", "targetBranch", "tests", "code", "agent", "plans", "highRisk", "checks"],
+  "additionalProperties": false,
+  "$defs": {
+    "text": {"type": "string", "pattern": "\\S"},
+    "outputPath": {
+      "type": "string",
+      "pattern": "^(?!(?:\\.git|\\.katatay)(?:/|$))(?!(?:.*/)?\\.{1,2}(?:/|$))[^/\\\\:*?\\[\\]{}\\x00-\\x1f]+(?:/[^/\\\\:*?\\[\\]{}\\x00-\\x1f]+)*$"
+    },
+    "percent": {"type": "number", "minimum": 0, "maximum": 100, "multipleOf": 0.1},
+    "check": {
+      "type": "object",
+      "properties": {
+        "command": {"$ref": "#/$defs/text"},
+        "runs": {"enum": ["always", "oncePerPlan"]},
+        "onFailure": {"enum": ["block", "report"]},
+        "timeLimitSeconds": {"type": "integer", "minimum": 1},
+        "suppressions": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "skipInCi": {"type": "boolean"},
+        "output": {"$ref": "#/$defs/outputPath"},
+        "exitCodes": {
+          "type": "object",
+          "minProperties": 2,
+          "propertyNames": {
+            "type": "string",
+            "pattern": "^(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])(?:-(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9]))?$"
+          },
+          "additionalProperties": {"enum": ["clean", "findings", "broken"]}
+        }
+      },
+      "required": ["command", "exitCodes"],
+      "additionalProperties": false
+    },
+    "coverage": {
+      "type": "object",
+      "properties": {
+        "command": {"type": "string", "pattern": "\\S", "not": {"pattern": "\\{changedFiles\\}"}},
+        "runs": {"const": "always"},
+        "onFailure": {"const": "block"},
+        "timeLimitSeconds": {"type": "integer", "minimum": 1},
+        "suppressions": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "skipInCi": {"const": false},
+        "output": {"$ref": "#/$defs/outputPath"},
+        "minimum": {
+          "type": "object",
+          "minProperties": 1,
+          "propertyNames": {"type": "string", "pattern": "/$"},
+          "additionalProperties": {
+            "type": "object",
+            "properties": {"lines": {"$ref": "#/$defs/percent"}, "branches": {"$ref": "#/$defs/percent"}},
+            "required": ["lines", "branches"],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": ["command", "output", "minimum"],
+      "additionalProperties": false
+    },
+    "mutation": {
+      "type": "object",
+      "properties": {
+        "command": {"type": "string", "pattern": "\\S", "not": {"const": "none"}},
+        "runs": {"const": "oncePerPlan"},
+        "onFailure": {"const": "report"},
+        "timeLimitSeconds": {"type": "integer", "minimum": 1},
+        "suppressions": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "skipInCi": {"type": "boolean"},
+        "output": {"allOf": [{"$ref": "#/$defs/outputPath"}, {"not": {"const": "none"}}]},
+        "excludePaths": {"type": "array", "items": {"type": "string", "minLength": 1}}
+      },
+      "required": ["command", "output", "excludePaths"],
+      "additionalProperties": false
+    }
+  }
+}

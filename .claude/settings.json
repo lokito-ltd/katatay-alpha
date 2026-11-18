@@ -1,0 +1,47 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write|NotebookEdit|Bash|ExitPlanMode",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node src/agents/claude/hooks/pre-tool.mjs"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node src/agents/claude/hooks/user-prompt.mjs"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "ExitPlanMode",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node src/agents/claude/hooks/post-tool.mjs"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node src/agents/claude/hooks/turn-end.mjs",
+            "timeout": 900
+          }
+        ]
+      }
+    ]
+  }
+}

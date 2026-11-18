@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "requirement.schema.json",
+  "title": "Requirement file frontmatter, version 1",
+  "description": "The YAML frontmatter of a file under the requirements folder's acceptance/ or invariants/. The folder gives the type, the file name (AC0001__slug.md or INV0001__slug.md) the id, and the first non-empty line of the body the statement.",
+  "type": "object",
+  "properties": {
+    "status": {"$ref": "#/$defs/status"},
+    "supersededBy": {"$ref": "#/$defs/id", "description": "The requirement that replaced this one. Only with status superseded."},
+    "source": {"type": "string", "pattern": "\\S", "description": "A durable external reference, such as a regulation or an incident number."}
+  },
+  "required": ["status"],
+  "if": {"properties": {"status": {"const": "superseded"}}},
+  "then": {"required": ["supersededBy"]},
+  "else": {"not": {"required": ["supersededBy"]}},
+  "$defs": {
+    "id": {"type": "string", "pattern": "^(AC|INV)\\d{4}$"},
+    "status": {"enum": ["accepted", "active", "superseded", "withdrawn"]},
+    "scenario": {"type": "string", "pattern": "^\\[(AC|INV)\\d{4}\\.\\d+\\]\\s+\\S", "description": "A scenario as the requirement file writes it: [AC0001.2] text."}
+  }
+}

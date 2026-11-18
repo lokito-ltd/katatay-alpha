@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "record-held.schema.json",
+  "title": "Written record_held event, version 1",
+  "type": "object",
+  "properties": {
+    "version": {"const": 1},
+    "seq": {"type": "integer", "minimum": 1, "maximum": 9999},
+    "ts": {"$ref": "verified.schema.json#/$defs/timestamp"},
+    "prev": {"oneOf": [{"type": "null"}, {"$ref": "verified.schema.json#/$defs/fingerprint"}]},
+    "branch": {"type": "string", "pattern": "\\S"},
+    "event": {"const": "record_held"},
+    "payload": {
+      "type": "object",
+      "properties": {
+        "treeFingerprint": {"$ref": "verified.schema.json#/$defs/fingerprint"},
+        "note": {"type": ["string", "null"]},
+        "gaps": {"$ref": "change-report.schema.json#/$defs/gaps"},
+        "changeReportSnapshot": {"$ref": "change-report.schema.json#/$defs/snapshot"}
+      },
+      "required": ["treeFingerprint", "note", "gaps", "changeReportSnapshot"],
+      "additionalProperties": false
+    }
+  },
+  "required": ["version", "seq", "ts", "prev", "event", "payload"],
+  "additionalProperties": false,
+  "if": {
+    "properties": {"seq": {"const": 1}}
+  },
+  "then": {
+    "required": ["branch"],
+    "properties": {"prev": {"type": "null"}}
+  },
+  "else": {
+    "properties": {"prev": {"$ref": "verified.schema.json#/$defs/fingerprint"}, "branch": false}
+  }
+}

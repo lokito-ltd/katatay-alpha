@@ -1,0 +1,10 @@
+{
+  "session_id": "00000000-0000-7000-8000-000000000001",
+  "turn_id": "00000000-0000-7000-8000-000000000002",
+  "transcript_path": "{{HOME}}/.codex/sessions/2026/10/29/rollout-2026-10-29T00-00-00-00000000-0000-7000-8000-000000000001.jsonl",
+  "cwd": "{{REPO}}",
+  "hook_event_name": "UserPromptSubmit",
+  "model": "gpt-6-astra",
+  "permission_mode": "bypassPermissions",
+  "prompt": "Use only the apply_patch tool, never the shell. In ONE single apply_patch call: add a file a.txt containing 'one', and add b.txt containing 'two'. Then in a SECOND single apply_patch call: update a.txt to say 'uno', move b.txt to c.txt, and delete notes.md. Then stop."
+}

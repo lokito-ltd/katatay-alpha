@@ -1,0 +1,20 @@
+{
+  "config": {
+    "features": {
+      "network_proxy": null,
+      "js_repl": false,
+      "api_key_model_discovery": false,
+      "auth_elicitation": true,
+      "background_paginated_rollout_migration": false,
+      "codex_apps_mcp_2026_07_28": false,
+      "mcp_2026_07_28": false,
+      "memories": false,
+      "mentions_v2": true,
+      "remote_control": false,
+      "remote_plugin": true,
+      "tool_suggest": true,
+      "windows_sandbox_service": false
+    }
+  },
+  "origins": {}
+}

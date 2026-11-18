@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "triaged.schema.json",
+  "title": "Written triaged event, version 1",
+  "type": "object",
+  "properties": {
+    "version": {"const": 1},
+    "seq": {"type": "integer", "minimum": 1, "maximum": 9999},
+    "ts": {"type": "string", "pattern": "^\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\d\\.\\d{3}Z$"},
+    "prev": {"oneOf": [{"type": "null"}, {"type": "string", "pattern": "^[a-f0-9]{64}$"}]},
+    "branch": {"type": "string", "pattern": "\\S"},
+    "event": {"const": "triaged"},
+    "payload": {
+      "type": "object",
+      "properties": {
+        "treeFingerprint": {"$ref": "#/$defs/fingerprint"},
+        "implementationFingerprint": {"$ref": "#/$defs/fingerprint"},
+        "level": {"enum": ["LOW", "MEDIUM", "HIGH"]},
+        "reasons": {"type": "array", "items": {"$ref": "#/$defs/text"}},
+        "implemented": {"type": "boolean"},
+        "evidence": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/evidence"},
+          "contains": {"type": "object", "properties": {"role": {"const": "analysis"}}},
+          "minContains": 1,
+          "maxContains": 1
+        },
+        "testCount": {"$ref": "#/$defs/count"},
+        "predicted": {"$ref": "#/$defs/bucket"},
+        "surprise": {"$ref": "#/$defs/bucket"},
+        "overPredicted": {
+          "type": "object",
+          "properties": {"count": {"$ref": "#/$defs/count"}, "total": {"$ref": "#/$defs/count"}},
+          "required": ["count", "total"],
+          "additionalProperties": false
+        },
+        "notRun": {
+          "type": "object",
+          "properties": {"predicted": {"$ref": "#/$defs/count"}, "unpredicted": {"$ref": "#/$defs/count"}},
+          "required": ["predicted", "unpredicted"],
+          "additionalProperties": false
+        },
+        "unchecked": {"type": "array", "items": {"$ref": "#/$defs/text"}}
+      },
+      "required": [
+        "treeFingerprint", "implementationFingerprint", "level", "reasons", "implemented", "evidence",
+        "testCount", "predicted", "surprise", "overPredicted", "notRun"
+      ],
+      "additionalProperties": false,
+      "if": {"properties": {"level": {"const": "LOW"}}},
+      "then": {"properties": {"reasons": {"maxItems": 0}}},
+      "else": {"properties": {"reasons": {"minItems": 1, "maxItems": 4}}}
+    }
+  },
+  "required": ["version", "seq", "ts", "prev", "event", "payload"],
+  "additionalProperties": false,
+  "if": {"properties": {"seq": {"const": 1}}},
+  "then": {"required": ["branch"], "properties": {"prev": {"type": "null"}}},
+  "else": {"properties": {"prev": {"type": "string", "pattern": "^[a-f0-9]{64}$"}, "branch": false}},
+  "$defs": {
+    "fingerprint": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "text": {"type": "string", "pattern": "\\S"},
+    "count": {"type": "integer", "minimum": 0},
+    "bucket": {
+      "type": "object",
+      "properties": {"failed": {"$ref": "#/$defs/count"}, "total": {"$ref": "#/$defs/count"}},
+      "required": ["failed", "total"],
+      "additionalProperties": false
+    },
+    "evidence": {
+      "type": "object",
+      "properties": {
+        "role": {"enum": ["raw", "analysis"]},
+        "title": {"$ref": "#/$defs/text"},
+        "snapshot": {"type": "string", "pattern": "^\\.katatay/local/[^/]+/(?:[^/]+/)+\\d{8}T\\d{6}\\.\\d{3}Z_[\\w-]{43}\\.\\w+$"}
+      },
+      "required": ["role", "title", "snapshot"],
+      "additionalProperties": false
+    }
+  }
+}

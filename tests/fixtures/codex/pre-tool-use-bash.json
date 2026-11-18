@@ -1,0 +1,14 @@
+{
+  "session_id": "00000000-0000-7000-8000-000000000001",
+  "turn_id": "00000000-0000-7000-8000-000000000002",
+  "transcript_path": "{{HOME}}/.codex/sessions/2026/10/29/rollout-2026-10-29T00-00-00-00000000-0000-7000-8000-000000000001.jsonl",
+  "cwd": "{{REPO}}",
+  "hook_event_name": "PreToolUse",
+  "model": "gpt-6-astra",
+  "permission_mode": "default",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "pwd; rg --files -g 'notes.txt' -g 'notes.md' -g 'AGENTS.md' -g '!node_modules' -g '!.git'"
+  },
+  "tool_use_id": "exec-00000000-0000-4000-8000-000000000001"
+}

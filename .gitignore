@@ -1,0 +1,22 @@
+node_modules/
+*.log
+.DS_Store
+
+# The tarball `npm run pack:katatay` builds
+/dist/
+
+# The coverage report `npm test` writes and `npm run coverage:check` reads
+/coverage/
+
+# The JUnit reports `npm test` writes and `npm run req:trace` reads. The
+# referee deletes them before each run, and refuses while git tracks one.
+/reports/
+
+# Snapshots referenced by the referee’s committed events
+/.katatay/local/
+
+# TypeScript incremental build info
+*.tsbuildinfo
+
+# The sandbox `npm run mutate` copies the code into (see src/evidence/mutants.ts)
+/.stryker-tmp/

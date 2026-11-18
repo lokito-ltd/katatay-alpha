@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "verify-failed.schema.json",
+  "title": "Written verify_failed event, version 1",
+  "type": "object",
+  "properties": {
+    "version": {"const": 1},
+    "seq": {"type": "integer", "minimum": 1, "maximum": 9999},
+    "ts": {"$ref": "verified.schema.json#/$defs/timestamp"},
+    "prev": {"oneOf": [{"type": "null"}, {"$ref": "verified.schema.json#/$defs/fingerprint"}]},
+    "branch": {"type": "string", "pattern": "\\S"},
+    "event": {"const": "verify_failed"},
+    "payload": {
+      "type": "object",
+      "properties": {
+        "treeFingerprint": {"$ref": "verified.schema.json#/$defs/fingerprint"},
+        "tail": {"type": "string", "description": "The last 20 lines of what verify printed."},
+        "rulebookFingerprint": {
+          "description": "The rulebook bytes at the start of the run, or null when they could not be read.",
+          "oneOf": [{"type": "null"}, {"$ref": "verified.schema.json#/$defs/fingerprint"}]
+        },
+        "baseline": {"$ref": "verified.schema.json#/$defs/commit"},
+        "results": {"$ref": "verified.schema.json#/$defs/results"},
+        "trigger": {"const": "rerun"}
+      },
+      "required": ["treeFingerprint", "tail", "rulebookFingerprint", "baseline", "results"],
+      "additionalProperties": false
+    }
+  },
+  "required": ["version", "seq", "ts", "prev", "event", "payload"],
+  "additionalProperties": false,
+  "if": {"properties": {"seq": {"const": 1}}},
+  "then": {"required": ["branch"], "properties": {"prev": {"type": "null"}}},
+  "else": {"properties": {"prev": {"$ref": "verified.schema.json#/$defs/fingerprint"}, "branch": false}}
+}

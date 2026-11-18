@@ -1,0 +1,937 @@
+{
+  "$comment": "An OpenAPI-like description of commands, not HTTP. Read it with the \"Reading contract.json\" section of README.md.",
+  "name": "The agent contract",
+  "version": 1,
+  "description": "The commands between the referee and an agent adapter, as they stand. Agreed with the operator on 2026-10-23. README.md beside this file has the sequence diagrams, the mapping for each agent, and the reasons.",
+  "transport": {
+    "stdin": "One JSON object, matching the command's stdin schema.",
+    "stdout": "One JSON object, matching the command's stdout schema, written in full before the process exits.",
+    "stderr": "Progress and the reason for exit 2. Never part of the answer.",
+    "exitCodes": {
+      "0": "An answer on stdout. Every decision is inside it, refusals included.",
+      "2": "The input does not match the stdin schema, or its version is not this one. A bug in the caller. One sentence on stderr, nothing on stdout.",
+      "other": "No answer: any other exit code, a timeout, or stdout that does not match. Each command’s ifNoAnswer describes the fallback."
+    },
+    "version": "Every request and answer carries the harness schema version printed by workflow version.",
+    "messages": "Every message is { code, for, text }. The agent sees every message; for: operator means the operator must see it too. An adapter shows the text of a code it does not know, so adding a code breaks nothing. text is Markdown.",
+    "paths": "Paths in stdin are as the agent gave them: from the repository root, or absolute. The referee resolves them.",
+    "refusedRulebook": "A rulebook the referee refuses is an answer, not a crash: every moment answers one stop message for the operator naming the key and the reason, and denies what it would otherwise decide."
+  },
+  "commands": {
+    "on write": {
+      "caller": "agent adapter",
+      "run": "workflow on write",
+      "summary": "May this tool call happen?",
+      "description": "Called before every tool call that may write: file edits, and shell\ncommands. The adapter turns its agent's tool call into `writes` and,\nfor a shell call, passes the command line in `command`.\n\nThe referee decides, in this order:\n\n1. A locked path is denied, as is a delete under the requirements\n   folder. The locks are the referee's own (`.katatay/`, `.git/`) and\n   the rulebook's `agent.lockedPaths`.\n2. A path outside the repository is allowed.\n3. A file directly in the rulebook's `plans.dir`, not in a\n   subfolder, or the follow-ups file, is allowed in every phase.\n4. A broken logbook denies every other write.\n5. In phase `open`, every other write is denied.\n\nFor `command`, the referee applies rule b: deny when the command names a\nlocked path together with a write marker (`>`, `>>`, `rm`, `mv`, `cp`,\n`tee`, `sed -i`, `truncate`). A command is never a phase-gated write.\nAn edit made through the shell is caught when the turn ends.",
+      "stdin": {
+        "$ref": "#/schemas/WriteRequest"
+      },
+      "stdout": {
+        "$ref": "#/schemas/WriteAnswer"
+      },
+      "stdoutMeans": "The decision. `messages` is empty when allowed, and holds one message saying why when denied.",
+      "ifNoAnswer": "The adapter denies every file write, plans and the follow-ups file included, and allows a shell command.",
+      "examples": [
+        {
+          "title": "Claude Edit",
+          "stdin": {
+            "version": 1,
+            "writes": [
+              {
+                "path": "app/page.tsx",
+                "delete": false
+              }
+            ],
+            "command": null
+          }
+        },
+        {
+          "title": "Codex apply_patch touching two files",
+          "stdin": {
+            "version": 1,
+            "writes": [
+              {
+                "path": "modules/tree/index.ts",
+                "delete": false
+              },
+              {
+                "path": "modules/tree/old.ts",
+                "delete": true
+              }
+            ],
+            "command": null
+          }
+        },
+        {
+          "title": "Bash, either agent",
+          "stdin": {
+            "version": 1,
+            "writes": [],
+            "command": "rm requirements/changes/0001__x.md"
+          }
+        },
+        {
+          "title": "answer: denied",
+          "stdout": {
+            "version": 1,
+            "allow": false,
+            "messages": [
+              {
+                "code": "needs_plan",
+                "for": "agent",
+                "text": "No plan has been approved on this branch, so edits are not permitted yet. Present a plan for the operator to approve."
+              }
+            ]
+          }
+        },
+        {
+          "title": "answer: allowed",
+          "stdout": {
+            "version": 1,
+            "allow": true,
+            "messages": []
+          }
+        }
+      ]
+    },
+    "on prompt": {
+      "caller": "agent adapter",
+      "run": "workflow on prompt",
+      "summary": "The operator sent a message.",
+      "description": "Records `record` and `reset` when the whole message is one of them, and\nalways ends with a `state` message saying where the change stands. The\nreferee also asks the adapter's `check` here, and returns each warning as\na `warning` message for the operator.",
+      "stdin": {
+        "$ref": "#/schemas/PromptRequest"
+      },
+      "stdout": {
+        "$ref": "#/schemas/PromptAnswer"
+      },
+      "stdoutMeans": "Messages only. A prompt is never refused here.",
+      "ifNoAnswer": "The adapter puts \"workflow: state unavailable\" and the reason in front of the agent. The prompt still goes through."
+    },
+    "on plan-presented": {
+      "caller": "agent adapter",
+      "run": "workflow on plan-presented",
+      "summary": "Check the plan before presentation.",
+      "description": "A courtesy using the same validator as turn end. Reads the plan and returns diagnostics without writing state, granting approval or running phase work. A valid plan is silent. The adapter bounds correction requests and warns when no answer is available.",
+      "stdin": {
+        "$ref": "#/schemas/PlanPresentedRequest"
+      },
+      "stdout": {
+        "$ref": "#/schemas/PlanPresentedAnswer"
+      },
+      "stdoutMeans": "Whether plan contents need correction, and what to say. This is not a permission decision.",
+      "ifNoAnswer": "Warn and continue presentation; never approve or permanently block the operator’s dialog.",
+      "examples": [
+        {
+          "title": "A valid plan",
+          "stdin": {
+            "version": 1,
+            "planFile": "/home/operator/.claude/plans/refactor.md"
+          },
+          "stdout": {
+            "version": 1,
+            "needsCorrection": false,
+            "messages": []
+          }
+        }
+      ]
+    },
+    "on plan-approved": {
+      "caller": "agent adapter",
+      "run": "workflow on plan-approved",
+      "summary": "The operator approved a plan.",
+      "description": "The only way a change gets permission to start. Call it only when the\noperator really approved; how the adapter knows is its own business.\n\nBefore calling, the adapter makes sure `planFile` exists, sits directly in\nthe rulebook's `plans.dir`, and holds the plan the operator approved,\nwith any edits they made. A revised plan may reuse the file of the approval\nbefore it.\n\nThe referee reads the plan from the file, checks its format (its\nclosing `workflow` block, such as `test-only:` and `requirement-changes:`), pins the\nbaseline on a first approval, publishes the exact bytes and appends\n`plan_approved` with the proposal hash, snapshot reference, declarations and baseline.\n\nIt answers `recorded: false` with `refused` on the target branch, for changed content on a\nbranch whose change is already recorded, and on a plan whose format\ndoes not check out. It answers `recorded: false` with `stop` when the\nfile is missing or not directly in `plans.dir`, when no baseline can be\npinned, or when the snapshot cannot be published.\n\nApproving byte-identical content to the current live grant returns recorded: false with an informational message and changes no state. A different plan follows revision rules. Reset and merge end the live grant.",
+      "stdin": {
+        "$ref": "#/schemas/PlanApprovedRequest"
+      },
+      "stdout": {
+        "$ref": "#/schemas/PlanApprovedAnswer"
+      },
+      "stdoutMeans": "Whether the approval was recorded.",
+      "ifNoAnswer": "The adapter tells the operator no new approval was recorded; the existing phase still applies."
+    },
+    "on turn-end": {
+      "caller": "agent adapter",
+      "run": "workflow on turn-end",
+      "summary": "The agent's turn ended.",
+      "description": "Adapters should send planFile when a turn presents a plan. This courtesy helps the operator see problems before approving; approval does not depend on it. Collect plan problems, then run ordinary turn-end work and return both sets of messages. The courtesy never replaces the freeze check, verification, mutation or recording. Invalid contents receive correction instructions through the existing one-shot keepWorking mechanism. Capture failures and unreadable or misplaced plan files are warnings. Successful validation is silent and grants no permission. The Claude adapter checks before ExitPlanMode through on plan-presented; the Codex adapter checks at turn end. Template validation defaults on through plans.validateFormat; YAML and declaration checks always apply. Approval does not rerun template validation or require a receipt.\n\nHolds the freeze, runs verify itself, runs mutation once per plan,\nrecords the change once declared, and says what comes next.\n\n`keepWorking: true` means the agent has more work to do and the turn\nmay not end yet: the adapter makes the agent carry on with the\nmessages. A pass that only has something to tell the operator, such\nas `verified`, answers `keepWorking: false`; delivering it is the\nadapter's job, and an adapter may refuse the stop to do that.\n\nA fresh triage reply can request convergence once. A stop used to deliver triage or a verification pass still leaves one opportunity to request fixes after verification fails. Verify is not run again when the tree is\nunchanged since the last `verify_failed` in the logbook, on any turn end.",
+      "stdin": {
+        "$ref": "#/schemas/TurnEndRequest"
+      },
+      "stdout": {
+        "$ref": "#/schemas/TurnEndAnswer"
+      },
+      "stdoutMeans": "Whether the agent must keep working, and what to say.",
+      "ifNoAnswer": "The adapter says nothing was verified, and keeps the agent working unless stopRefusedBefore was true.",
+      "examples": [
+        {
+          "title": "answer: verified",
+          "stdout": {
+            "version": 1,
+            "keepWorking": false,
+            "messages": [
+              {
+                "code": "verified",
+                "for": "operator",
+                "text": "Verification passed and was recorded against this working tree.\n\nTest quality on the lines this change touched: …\n\nWhere review should look: …"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "check": {
+      "caller": "referee",
+      "run": "the rulebook's agent.adapters.<name>.checkCommand",
+      "timeoutSeconds": 30,
+      "summary": "What is wrong with the agent's setup?",
+      "description": "Asked on every prompt and by `state:show` and `state:verify`. Warnings\nnever fail anything: only the operator can fix the agent's settings.\nThe referee turns each one into a `warning` message for the operator. No\nanswer becomes one more warning, which the referee writes itself.",
+      "stdin": {
+        "$ref": "#/schemas/CheckRequest"
+      },
+      "stdout": {
+        "$ref": "#/schemas/CheckAnswer"
+      },
+      "stdoutMeans": "The warnings. Empty when nothing is wrong.",
+      "ifNoAnswer": "The referee adds one warning of its own saying the check gave no answer. Silence is never read as a clean report."
+    },
+    "defaults": {
+      "caller": "referee (init)",
+      "run": "the adapter's defaults command, which init is pointed at",
+      "summary": "What init should propose for this agent.",
+      "description": "Asked once, by `init`, which writes the answer into the draft rulebook\nand the operator's to-do list. Nothing reads it afterwards: from then\non the rulebook is the operator's.\n\n`init` runs where no rulebook exists yet, so it is told which adapter\nto use and finds this command there. It then writes the adapter's\ncheck command into the draft rulebook.",
+      "stdin": {
+        "$ref": "#/schemas/DefaultsRequest"
+      },
+      "stdout": {
+        "$ref": "#/schemas/DefaultsAnswer"
+      },
+      "stdoutMeans": "The proposal.",
+      "ifNoAnswer": "init leaves the agent's part of the draft rulebook empty and tells the operator why.",
+      "examples": [
+        {
+          "title": "Claude Code",
+          "stdin": {
+            "version": 1,
+            "root": "/home/me/project"
+          },
+          "stdout": {
+            "version": 1,
+            "locked": [
+              ".claude/settings.json",
+              ".claude/settings.local.json",
+              ".claude/hooks/**",
+              "~/.claude/settings.json"
+            ],
+            "plansFolder": "~/.claude/plans",
+            "instructions": ".claude/rules/workflow.md",
+            "commands": {
+              "check": "node src/agents/claude/check.mjs",
+              "install": "node src/agents/claude/install.mjs"
+            },
+            "registration": {
+              "file": ".claude/settings.json",
+              "text": "{ \"hooks\": { \"PreToolUse\": [ ... ] } }\n",
+              "steps": [
+                "Check the hooks merged into .claude/settings.json. The file is locked, so a session cannot change them.",
+                "Start a new Claude Code session afterwards, so it loads the new hooks."
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "install": {
+      "caller": "referee (init)",
+      "run": "the defaults answer's commands.install",
+      "summary": "Which files carry the workflow's instructions and skills for this agent, and how are its hooks registered?",
+      "description": "Asked by `init`, which writes the files it answers and never overwrites one. A file marked `shared` holds the project's own text too: when it exists, `init` appends the workflow's text between marker lines instead. The `registration` is the agent's hook registration file, whole, after the adapter merged the workflow's hooks into what the project's file holds. `init` writes it, the one locked path it may write, because the operator runs `init`.\n\nThe request carries the referee's texts: its instructions and the harness\nsupport skills. A project has no copy of the harness, so the adapter reads\nnone of its files, and nothing it installs points back into the harness.\nThe adapter turns the texts into its agent's format and location, and may\nreword them as it wishes.\n\nThe referee refuses a path that is absolute, leaves the project, or that a\nlock covers: its own, or the agent's locked paths from its defaults.",
+      "stdin": {
+        "$ref": "#/schemas/InstallRequest"
+      },
+      "stdout": {
+        "$ref": "#/schemas/InstallAnswer"
+      },
+      "stdoutMeans": "The files to write, and the hook registration.",
+      "ifNoAnswer": "init installs no instructions, no skills and no hooks for this agent, and tells the operator why.",
+      "examples": [
+        {
+          "title": "Claude Code",
+          "stdin": {
+            "version": 1,
+            "instructions": "# The workflow\n…",
+            "skills": [
+              {
+                "name": "plan-change",
+                "description": "Produce a bounded change plan …",
+                "prompt": "# Planning a change\n…"
+              }
+            ]
+          },
+          "stdout": {
+            "version": 1,
+            "files": [
+              {
+                "path": ".claude/rules/workflow.md",
+                "text": "# The workflow\n…\n\n## In Claude Code\n…"
+              },
+              {
+                "path": ".claude/skills/plan-change/SKILL.md",
+                "text": "---\nname: plan-change\n…"
+              }
+            ],
+            "registration": {
+              "path": ".claude/settings.json",
+              "text": "{\n  \"hooks\": { … }\n}\n"
+            }
+          }
+        }
+      ]
+    }
+  },
+  "schemas": {
+    "Version": {
+      "type": "integer",
+      "const": 1,
+      "description": "The contract's version. Any other number is input that does not match."
+    },
+    "Audience": {
+      "type": "string",
+      "enum": [
+        "agent",
+        "operator"
+      ],
+      "description": "The agent sees every message. `operator` means the operator must see\nit too, and how is the adapter's choice. A string so that a third\naudience can be added later.\n"
+    },
+    "Code": {
+      "type": "string",
+      "description": "One list for every moment. A code names a situation someone handles\ndifferently. An adapter shows the text of a code it does not know.\n",
+      "enum": [
+        "state",
+        "info",
+        "warning",
+        "stop",
+        "needs_plan",
+        "locked",
+        "approved",
+        "refused",
+        "reset",
+        "declared",
+        "held",
+        "not_declared",
+        "frozen",
+        "run_triage",
+        "triaged",
+        "verify_failed",
+        "verified",
+        "change_file",
+        "recorded"
+      ],
+      "meanings": {
+        "state": "where the change stands, on every prompt",
+        "info": "news, nothing to do",
+        "warning": "the operator judges it, including the agent's setup",
+        "stop": "only the operator can fix it",
+        "needs_plan": "present a plan",
+        "locked": "leave the file alone",
+        "approved": "start implementing",
+        "refused": "fix the plan or the branch, present again",
+        "reset": "a new epoch started",
+        "declared": "write the change file; carries the change report",
+        "held": "the operator types record again to declare",
+        "not_declared": "the tree is not verified",
+        "frozen": "unwind the test edits, then run triage",
+        "run_triage": "run triage, now or when the implementation is done",
+        "triaged": "repeat the buckets to the operator",
+        "verify_failed": "repeat the summary to the operator; fix the implementation",
+        "verified": "repeat the report; the operator decides on record",
+        "change_file": "write or fix the change file",
+        "recorded": "write the commit message, wait for yes"
+      }
+    },
+    "Message": {
+      "type": "object",
+      "required": [
+        "code",
+        "for",
+        "text"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "$ref": "#/schemas/Code"
+        },
+        "for": {
+          "$ref": "#/schemas/Audience"
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Markdown: paragraphs, lists, inline code. The referee's wording, with no agent's vocabulary."
+        }
+      }
+    },
+    "Messages": {
+      "type": "array",
+      "items": {
+        "$ref": "#/schemas/Message"
+      },
+      "description": "In the order to show them. Messages never decide anything."
+    },
+    "Write": {
+      "type": "object",
+      "required": [
+        "path",
+        "delete"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "description": "As the agent gave it: from the repository root, or absolute."
+        },
+        "delete": {
+          "type": "boolean",
+          "description": "True when the call removes the file or moves it away."
+        }
+      }
+    },
+    "WriteRequest": {
+      "type": "object",
+      "required": [
+        "version",
+        "writes",
+        "command"
+      ],
+      "additionalProperties": false,
+      "description": "At least one of `writes` and `command` is non-empty.",
+      "properties": {
+        "version": {
+          "$ref": "#/schemas/Version"
+        },
+        "writes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/schemas/Write"
+          },
+          "description": "Every file the call writes, moves or removes. Empty for a shell call."
+        },
+        "command": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The shell command line, for a shell call. Null otherwise."
+        }
+      }
+    },
+    "WriteAnswer": {
+      "type": "object",
+      "required": [
+        "version",
+        "allow",
+        "messages"
+      ],
+      "additionalProperties": false,
+      "description": "Codes used: needs_plan, locked, stop.",
+      "properties": {
+        "version": {
+          "$ref": "#/schemas/Version"
+        },
+        "allow": {
+          "type": "boolean"
+        },
+        "messages": {
+          "$ref": "#/schemas/Messages"
+        }
+      }
+    },
+    "PromptRequest": {
+      "type": "object",
+      "required": [
+        "version",
+        "prompt"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "version": {
+          "$ref": "#/schemas/Version"
+        },
+        "prompt": {
+          "type": "string",
+          "description": "The operator's message as they typed it."
+        }
+      }
+    },
+    "PromptAnswer": {
+      "type": "object",
+      "required": [
+        "version",
+        "messages"
+      ],
+      "additionalProperties": false,
+      "description": "Codes used: state, info, warning, stop, reset, declared, recorded, held, not_declared. The last message is always state, except when the state cannot be read at all: then the answer is one stop.",
+      "properties": {
+        "version": {
+          "$ref": "#/schemas/Version"
+        },
+        "messages": {
+          "allOf": [
+            {
+              "$ref": "#/schemas/Messages"
+            },
+            {
+              "minItems": 1
+            }
+          ]
+        }
+      }
+    },
+    "PlanApprovedRequest": {
+      "type": "object",
+      "required": [
+        "version",
+        "planFile"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "version": {
+          "$ref": "#/schemas/Version"
+        },
+        "planFile": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The plan the operator approved: a Markdown file directly in the\nrulebook's `plans.dir`, holding the approved text with any edits. The referee\nreads the plan from here and records the snapshot reference and the hash.\n"
+        }
+      }
+    },
+    "PlanApprovedAnswer": {
+      "type": "object",
+      "required": [
+        "version",
+        "recorded",
+        "messages"
+      ],
+      "additionalProperties": false,
+      "description": "Codes used: approved, refused, run_triage, info, warning, stop.",
+      "properties": {
+        "version": {
+          "$ref": "#/schemas/Version"
+        },
+        "recorded": {
+          "type": "boolean",
+          "description": "Whether a new approval event was recorded. False also represents an already-approved identical plan, with an info message and the existing phase preserved."
+        },
+        "messages": {
+          "allOf": [
+            {
+              "$ref": "#/schemas/Messages"
+            },
+            {
+              "minItems": 1
+            }
+          ]
+        }
+      }
+    },
+    "TurnEndRequest": {
+      "type": "object",
+      "required": [
+        "version",
+        "stopRefusedBefore",
+        "secondsLeft"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "version": {
+          "$ref": "#/schemas/Version"
+        },
+        "stopRefusedBefore": {
+          "type": "boolean",
+          "description": "True when an earlier stop in this turn was refused, by the referee's\nkeepWorking or by the adapter delivering a message. Claude's and\nCodex's stop_hook_active. Used only to stop a turn looping.\n"
+        },
+        "secondsLeft": {
+          "type": "number",
+          "minimum": 0,
+          "description": "How long the agent still gives this hook before killing it. Mutation starts only when the rulebook's whole time limit fits, with 20 seconds to spare."
+        },
+        "triageReplyId": {
+          "type": ["string", "null"],
+          "minLength": 1,
+          "description": "Optional identifier of this final triage reply, stable across overlapping stops. For the newly triaged tree it requests one continuation before verification. An ordinary completion omits it."
+        },
+        "planFile": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "description": "Adapters should send this optional path when a turn presents a plan: a readable Markdown file directly in plans.dir. Omitted or null skips this courtesy. It helps the operator see problems before approving; approval does not depend on it. The referee checks template structure (unless plans.validateFormat is false) and declarations, and combines the messages with phase-specific results. It never replaces the freeze check, verification, mutation or recording, grants no approval and creates no receipt. Unreadable or misplaced files are warnings. The Claude adapter checks before ExitPlanMode through on plan-presented; the Codex adapter checks at turn end."
+        }
+      }
+    },
+    "TurnEndAnswer": {
+      "type": "object",
+      "required": [
+        "version",
+        "keepWorking",
+        "messages"
+      ],
+      "additionalProperties": false,
+      "description": "Codes used: refused, info, warning, stop, frozen, run_triage, triaged, verify_failed, verified, change_file, recorded.",
+      "properties": {
+        "version": {
+          "$ref": "#/schemas/Version"
+        },
+        "keepWorking": {
+          "type": "boolean"
+        },
+        "messages": {
+          "$ref": "#/schemas/Messages"
+        }
+      }
+    },
+    "CheckRequest": {
+      "type": "object",
+      "required": [
+        "version",
+        "root",
+        "extraHooks"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "version": {
+          "$ref": "#/schemas/Version"
+        },
+        "root": {
+          "type": "string",
+          "description": "The repository root, absolute."
+        },
+        "extraHooks": {
+          "description": "This adapter's extraHooks settings from agent.adapters.<name>. Null when its check is switched off, and then the adapter reports no extra hooks. Missing and switched-off workflow hooks are reported either way.",
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "required": [
+                "acknowledged"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "acknowledged": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/schemas/Hook"
+                  }
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "Hook": {
+      "type": "object",
+      "required": [
+        "event",
+        "command"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "event": {
+          "type": "string",
+          "examples": [
+            "PreToolUse"
+          ]
+        },
+        "matcher": {
+          "type": "string",
+          "examples": [
+            "Bash"
+          ]
+        },
+        "command": {
+          "type": "string",
+          "examples": [
+            "rtk hook claude"
+          ]
+        }
+      }
+    },
+    "CheckAnswer": {
+      "type": "object",
+      "required": [
+        "version",
+        "warnings"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "version": {
+          "$ref": "#/schemas/Version"
+        },
+        "warnings": {
+          "type": "array",
+          "description": "Each a sentence for the operator, who has no other context.",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "DefaultsRequest": {
+      "type": "object",
+      "required": [
+        "version"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "version": {
+          "$ref": "#/schemas/Version"
+        }
+      }
+    },
+    "DefaultsAnswer": {
+      "type": "object",
+      "required": [
+        "version",
+        "locked",
+        "plansFolder",
+        "instructions",
+        "commands",
+        "registration"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "version": {
+          "$ref": "#/schemas/Version"
+        },
+        "locked": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "The agent's own config, as globs. `~` is the home directory. Becomes the rulebook's agent.lockedPaths.",
+          "examples": [
+            [
+              ".claude/settings.json",
+              ".claude/settings.local.json",
+              ".claude/hooks/**",
+              "~/.claude/settings.json"
+            ]
+          ]
+        },
+        "plansFolder": {
+          "type": "string",
+          "description": "Where this agent keeps plans. Becomes the rulebook's plans.dir.",
+          "examples": [
+            "~/.claude/plans",
+            "~/.codex/plans"
+          ]
+        },
+        "instructions": {
+          "type": "string",
+          "description": "The file this agent reads the workflow's instructions from. The install command writes it, and check warns when it is missing.",
+          "examples": [
+            ".claude/rules/workflow.md",
+            "AGENTS.md"
+          ]
+        },
+        "commands": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": "The adapter's commands, as command lines run from the project root. init writes check to agent.adapters.<name>.checkCommand and runs install during setup.",
+          "examples": [
+            {
+              "check": "node src/agents/claude/check.mjs",
+              "install": "node src/agents/claude/install.mjs"
+            }
+          ]
+        },
+        "registration": {
+          "type": "object",
+          "required": [
+            "file",
+            "text",
+            "steps"
+          ],
+          "additionalProperties": false,
+          "description": "The agent's hook registration: the file, the hooks it holds, and the steps only the operator can take. init writes the file from the install answer's registration, merged into what the project already has, and prints the steps.",
+          "properties": {
+            "file": {
+              "type": "string",
+              "examples": [
+                ".claude/settings.json",
+                ".codex/hooks.json"
+              ]
+            },
+            "text": {
+              "type": "string",
+              "description": "The hook registration to merge into that file."
+            },
+            "steps": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Anything else only the operator can do, such as trusting the hooks in Codex with /hooks."
+            }
+          }
+        }
+      }
+    },
+    "InstallRequest": {
+      "type": "object",
+      "required": [
+        "version",
+        "instructions",
+        "skills"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "version": {
+          "$ref": "#/schemas/Version"
+        },
+        "plansFolder": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The rulebook's plans folder, `~` for the home directory, for an agent whose own settings name where plans go."
+        },
+        "instructions": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The workflow's instructions, in words any agent can follow."
+        },
+        "skills": {
+          "type": "array",
+          "description": "The harness support skills.",
+          "items": {
+            "type": "object",
+            "required": [
+              "name",
+              "description",
+              "prompt"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": "string",
+                "pattern": "^[a-z0-9][a-z0-9-]*$",
+                "description": "Paths are built from it."
+              },
+              "description": {
+                "type": "string",
+                "minLength": 1,
+                "description": "What the skill is for, which an agent reads to decide when to use it."
+              },
+              "prompt": {
+                "type": "string",
+                "description": "The skill itself."
+              }
+            }
+          }
+        }
+      }
+    },
+    "InstallAnswer": {
+      "type": "object",
+      "required": [
+        "version",
+        "files"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "version": {
+          "$ref": "#/schemas/Version"
+        },
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "path",
+              "text"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "path": {
+                "type": "string",
+                "minLength": 1,
+                "description": "From the project root. Never absolute, never outside the project, never locked."
+              },
+              "text": {
+                "type": "string",
+                "description": "The whole file."
+              },
+              "shared": {
+                "type": "boolean",
+                "description": "The project's own text shares this file. An existing one gets the workflow's text appended between marker lines, never replaced."
+              }
+            }
+          }
+        },
+        "registration": {
+          "type": "object",
+          "required": [
+            "path",
+            "text"
+          ],
+          "additionalProperties": false,
+          "description": "The hook registration file, whole, with the workflow's hooks merged into what the project's file holds. Its path is the defaults answer's registration.file.",
+          "properties": {
+            "path": {
+              "type": "string",
+              "minLength": 1
+            },
+            "text": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "PlanPresentedRequest": {
+      "type": "object",
+      "required": [
+        "version",
+        "planFile"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "version": {
+          "$ref": "#/schemas/Version"
+        },
+        "planFile": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "PlanPresentedAnswer": {
+      "type": "object",
+      "required": [
+        "version",
+        "needsCorrection",
+        "messages"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "version": {
+          "$ref": "#/schemas/Version"
+        },
+        "needsCorrection": {
+          "type": "boolean"
+        },
+        "messages": {
+          "$ref": "#/schemas/Messages"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "hooks.schema.json",
+  "title": "Version 1 agent requests and answers",
+  "description": "Select a named request or answer under $defs for the command being called. Several different commands share the same message shape.",
+  "anyOf": [
+    {"$ref": "#/$defs/WriteRequest"},
+    {"$ref": "#/$defs/WriteAnswer"},
+    {"$ref": "#/$defs/PromptRequest"},
+    {"$ref": "#/$defs/PromptAnswer"},
+    {"$ref": "#/$defs/PlanPresentedRequest"},
+    {"$ref": "#/$defs/PlanPresentedAnswer"},
+    {"$ref": "#/$defs/PlanApprovedRequest"},
+    {"$ref": "#/$defs/PlanApprovedAnswer"},
+    {"$ref": "#/$defs/TurnEndRequest"},
+    {"$ref": "#/$defs/TurnEndAnswer"},
+    {"$ref": "#/$defs/CheckRequest"},
+    {"$ref": "#/$defs/CheckAnswer"},
+    {"$ref": "#/$defs/DefaultsRequest"},
+    {"$ref": "#/$defs/DefaultsAnswer"},
+    {"$ref": "#/$defs/InstallRequest"},
+    {"$ref": "#/$defs/InstallAnswer"}
+  ],
+  "$defs": {
+    "WriteRequest": {"$ref": "../agents/contract.json#/schemas/WriteRequest"},
+    "WriteAnswer": {"$ref": "../agents/contract.json#/schemas/WriteAnswer"},
+    "PromptRequest": {"$ref": "../agents/contract.json#/schemas/PromptRequest"},
+    "PromptAnswer": {"$ref": "../agents/contract.json#/schemas/PromptAnswer"},
+    "PlanPresentedRequest": {"$ref": "../agents/contract.json#/schemas/PlanPresentedRequest"},
+    "PlanPresentedAnswer": {"$ref": "../agents/contract.json#/schemas/PlanPresentedAnswer"},
+    "PlanApprovedRequest": {"$ref": "../agents/contract.json#/schemas/PlanApprovedRequest"},
+    "PlanApprovedAnswer": {"$ref": "../agents/contract.json#/schemas/PlanApprovedAnswer"},
+    "TurnEndRequest": {"$ref": "../agents/contract.json#/schemas/TurnEndRequest"},
+    "TurnEndAnswer": {"$ref": "../agents/contract.json#/schemas/TurnEndAnswer"},
+    "CheckRequest": {"$ref": "../agents/contract.json#/schemas/CheckRequest"},
+    "CheckAnswer": {"$ref": "../agents/contract.json#/schemas/CheckAnswer"},
+    "DefaultsRequest": {"$ref": "../agents/contract.json#/schemas/DefaultsRequest"},
+    "DefaultsAnswer": {"$ref": "../agents/contract.json#/schemas/DefaultsAnswer"},
+    "InstallRequest": {"$ref": "../agents/contract.json#/schemas/InstallRequest"},
+    "InstallAnswer": {"$ref": "../agents/contract.json#/schemas/InstallAnswer"}
+  }
+}

@@ -1,0 +1,190 @@
+# PLEASE NOTE:
+# This file has no power on its own — a branch can edit or delete any job in
+# it. What actually protects main is set on GitHub, not here:
+#
+#   Settings → Rules → Rulesets → a branch ruleset on main: require a pull
+#   request, require these status checks to pass, block force pushes and
+#   deletion. Settings → General → "Allow auto-merge" off.
+#
+# With those on, this workflow is a real gate. Without them it's just advice.
+
+name: verify
+
+# Two cases only: a pull request, and a push to main (which only happens by
+# merging one). Nothing else starts it.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+# A newer push to the same pull request makes the older run pointless.
+concurrency:
+  group: verify-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+# Every job checks out the full history: the guard and `state verify` compare
+# against the target, and the history scan reads every commit. On a pull
+# request it checks out the branch's own tip, not GitHub's trial merge, so the
+# jobs see the branch as the referee saw it locally.
+#
+# Actions are pinned by commit, with the release they are in a comment, so a
+# moved tag cannot change what runs here.
+
+jobs:
+  # Checks catalogue structure: ids, statuses, supersession trails.
+  req-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run req:lint
+
+  # Checks the requirements catalogue against the target. Fails on what no
+  # approval could permit: a deleted requirement, a change no change file
+  # accounts for, a change file that misdescribes the catalogue. A reworded or
+  # retired requirement does not fail here. The guard prints it for the
+  # reviewer, and the merge is the approval. Only a pull request has something
+  # to compare against. The guard fetches the target named in
+  # .katatay/rulebook.json itself when it runs in CI, so it compares against
+  # the server's branch.
+  req-guard:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run req:guard
+
+  # The append-only logbook still links up, on every branch's logbook rather
+  # than only this one: they're committed, so a merged logbook is history a
+  # later branch could quietly edit. It also checks that every baseline a live
+  # change was measured from is on the target. In CI it fetches the target
+  # fresh first, so this is the server's answer rather than the branch's.
+  #
+  # There is deliberately no risk job. Risk is computed during the change, by
+  # the triage, on a tree whose tests still match main. Here it would run
+  # after the fact on a green branch and classify nothing.
+  state-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run state:verify
+
+  typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run typecheck
+
+  # No module reaches past another's boundary, and the referee imports no
+  # language tool. See .dependency-cruiser.cjs. This job alone cannot fail if
+  # the parser stops reading TypeScript: dependency-cruiser then sees no files
+  # and passes. dependency-cruiser.test.ts, in the test job, is what fails in
+  # that case.
+  boundaries:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run boundaries
+
+  # gitleaks, the same version the README names: keep the two the same. It is
+  # a Go binary, not an npm package, so it comes from its release, and the
+  # tarball's SHA-256 is pinned here rather than read from the release's own
+  # checksum file, which whoever could swap the tarball could swap too.
+  #
+  # First the working tree, with the same `npm run secrets` that verify runs.
+  # Then every commit in the history, which also catches a secret committed
+  # and deleted again within the same pull request. Findings exit 2. gitleaks'
+  # own errors exit 1, so the job fails on either.
+  secrets:
+    runs-on: ubuntu-latest
+    env:
+      GITLEAKS_VERSION: 8.30.1
+      GITLEAKS_SHA256: 551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+      - name: Install gitleaks
+        run: |
+          archive="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          curl -sSfL -o "$RUNNER_TEMP/$archive" "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/$archive"
+          echo "${GITLEAKS_SHA256}  $RUNNER_TEMP/$archive" | sha256sum --check --strict
+          mkdir -p "$RUNNER_TEMP/gitleaks"
+          tar -xzf "$RUNNER_TEMP/$archive" -C "$RUNNER_TEMP/gitleaks" gitleaks
+          echo "$RUNNER_TEMP/gitleaks" >> "$GITHUB_PATH"
+      - run: gitleaks version
+      - name: Scan the working tree
+        run: npm run --silent secrets
+      - name: Scan the history
+        run: gitleaks git . --config .gitleaks.toml --exit-code 2 --redact --verbose --no-banner
+
+  # Runs every test: the referee, the adapters, the machine journeys and the
+  # hook contracts. No browser is needed.
+  #
+  # `npm test` also measures coverage and writes the report to coverage/, and
+  # writes the JUnit reports to reports/junit/. The checks that read them run
+  # here, in the same job, because the reports exist nowhere else: req:trace,
+  # that every active requirement has acceptance evidence, and the coverage
+  # check against the minimums in .katatay/rulebook.json. `npm run verify`
+  # runs them in the same order.
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm test
+      - run: npm run req:trace
+      - run: npm run coverage:check

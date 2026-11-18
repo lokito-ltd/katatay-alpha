@@ -1,0 +1,31 @@
+# Secret scanning, read by `npm run secrets` (inside `verify`) and by CI.
+#
+# gitleaks' own default rules, plus one allowlist. An allowlist entry hides
+# findings the way a coverage exclusion hides code, so this file is on the
+# rulebook's high-risk list and every change to it is read in review.
+#
+# The allowlist names only folders git ignores. Nothing in them is committed,
+# but `gitleaks dir` reads the working tree, where they hold installed packages
+# and generated reports that are not this repository's to fix. A test fixture
+# that holds a fake token on purpose would be added here one path at a time,
+# with a comment saying why. There is none today.
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Folders git ignores: installed packages, reports and build output"
+paths = [
+  # Installed dependencies (`npm ci`).
+  '''(^|/)node_modules/''',
+  # The coverage report `npm test` writes.
+  '''^coverage/''',
+  # The JUnit reports and saved check analyses.
+  '''^reports/''',
+  # The tarball `npm run pack:katatay` builds.
+  '''^dist/''',
+  # The sandbox mutation testing copies the code into.
+  '''^\.stryker-tmp/''',
+  # The referee's local snapshots.
+  '''^\.katatay/local/''',
+]

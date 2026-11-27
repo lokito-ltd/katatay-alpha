@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "hooks": {
+    "preToolUse": [
+      {
+        "command": "node src/agents/cursor/hooks/pre-tool.mjs",
+        "matcher": "Write|Delete|Shell",
+        "timeout": 60,
+        "failClosed": true
+      }
+    ],
+    "beforeSubmitPrompt": [
+      {
+        "command": "node src/agents/cursor/hooks/user-prompt.mjs",
+        "timeout": 60
+      }
+    ],
+    "stop": [
+      {
+        "command": "node src/agents/cursor/hooks/turn-end.mjs",
+        "timeout": 900,
+        "loop_limit": null
+      }
+    ]
+  }
+}

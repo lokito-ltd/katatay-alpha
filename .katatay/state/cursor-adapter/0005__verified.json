@@ -1,0 +1,239 @@
+{
+  "version": 1,
+  "seq": 5,
+  "prev": "b49b8c45fde2a10025ddadfc6092dbe5453ff3f58b961e3d12c2f47b2d0148f7",
+  "ts": "2026-11-27T00:03:00.602Z",
+  "event": "verified",
+  "payload": {
+    "treeFingerprint": "735996d52cc1f80324c3a05426037f7e89e0fa791d9335834267de9669e0dfd6",
+    "baseline": "ddaa18b3286ba830ecd5bb3b04488125c67cbde2",
+    "rulebookFingerprint": "71098a7d5946b9421a4bd6d838f43125f367ae8bc7119700abe5def2ed7ae505",
+    "results": [
+      {
+        "name": "req:lint",
+        "status": "ok",
+        "reason": "Check passed.",
+        "evidence": [],
+        "summary": {
+          "outcome": "clean"
+        }
+      },
+      {
+        "name": "req:guard",
+        "status": "ok",
+        "reason": "Check passed.",
+        "evidence": [],
+        "summary": {
+          "outcome": "clean"
+        }
+      },
+      {
+        "name": "state:verify",
+        "status": "ok",
+        "reason": "Check passed.",
+        "evidence": [],
+        "summary": {
+          "outcome": "clean"
+        }
+      },
+      {
+        "name": "compile",
+        "status": "ok",
+        "reason": "Check passed.",
+        "evidence": [],
+        "summary": {
+          "outcome": "clean"
+        }
+      },
+      {
+        "name": "tests",
+        "status": "ok",
+        "reason": "Check passed.",
+        "evidence": [
+          {
+            "role": "raw",
+            "title": "JUnit: reports/junit/fast.xml",
+            "snapshot": ".katatay/local/cursor-adapter/junit/20261127T000255.106Z_JuSZ8n9yyJWF12sAwx6ifrj9l6Jw6wDTAhEK1frxYok.xml"
+          },
+          {
+            "role": "raw",
+            "title": "JUnit: reports/junit/slow.xml",
+            "snapshot": ".katatay/local/cursor-adapter/junit/20261127T000255.109Z_0S4c78FO_nbLy-f4visVVdr-8ZIE5hXC1QbnHNHSB4k.xml"
+          },
+          {
+            "role": "analysis",
+            "title": "Parsed test run and execution metadata",
+            "snapshot": ".katatay/local/cursor-adapter/junit/analysis/20261127T000255.259Z_G8Z4V7EPECOK5k2NXJuRtnWCR03_ylGLIibAynbLh7w.json"
+          }
+        ],
+        "summary": {
+          "total": 4746,
+          "passed": 4746,
+          "failed": 0,
+          "skipped": 0,
+          "inverted": 0,
+          "omittedFiles": 0
+        }
+      },
+      {
+        "name": "req:trace",
+        "status": "ok",
+        "reason": "Check passed.",
+        "evidence": [],
+        "summary": {
+          "outcome": "clean"
+        }
+      },
+      {
+        "name": "coverage",
+        "status": "ok",
+        "reason": "every folder is at or above its minimum",
+        "evidence": [
+          {
+            "role": "raw",
+            "title": "Raw LCOV coverage",
+            "snapshot": ".katatay/local/cursor-adapter/coverage/20261127T000257.131Z_unr-oYD-hElbgtNN9parSMPu1OkvJbv3evMbmh2FkDg.lcov"
+          },
+          {
+            "role": "analysis",
+            "title": "Coverage thresholds and changed lines",
+            "snapshot": ".katatay/local/cursor-adapter/coverage/20261127T000257.140Z__tjFD1CVNPwlbTfKfXVrZnXGsVJIpcqbkYPdbdDamnA.json"
+          }
+        ],
+        "summary": {
+          "folders": [
+            {
+              "folder": "src/",
+              "lines": {
+                "percent": 100,
+                "target": 100
+              },
+              "branches": {
+                "percent": 100,
+                "target": 100
+              }
+            },
+            {
+              "folder": "src/adapters/",
+              "lines": {
+                "percent": 94,
+                "target": 93.5
+              },
+              "branches": {
+                "percent": 93.4,
+                "target": 92.5
+              }
+            },
+            {
+              "folder": "src/evidence/",
+              "lines": {
+                "percent": 97.5,
+                "target": 96
+              },
+              "branches": {
+                "percent": 95.8,
+                "target": 93.5
+              }
+            },
+            {
+              "folder": "src/requirements/",
+              "lines": {
+                "percent": 96.4,
+                "target": 96
+              },
+              "branches": {
+                "percent": 91.6,
+                "target": 90.5
+              }
+            },
+            {
+              "folder": "src/workflow/",
+              "lines": {
+                "percent": 96.5,
+                "target": 89.5
+              },
+              "branches": {
+                "percent": 95,
+                "target": 87.5
+              }
+            },
+            {
+              "folder": "src/agents/",
+              "lines": {
+                "percent": 74.9,
+                "target": 71
+              },
+              "branches": {
+                "percent": 78,
+                "target": 75
+              }
+            }
+          ]
+        }
+      },
+      {
+        "name": "mutation",
+        "status": "reused",
+        "reason": "Runs once per approved plan.",
+        "source": {
+          "seq": 3,
+          "fingerprint": "e298d81146874dc435da2ac10fa6610707f70b608840ce29795405d7307c40d9"
+        },
+        "evidence": [
+          {
+            "role": "raw",
+            "title": "Raw mutation results",
+            "snapshot": ".katatay/local/cursor-adapter/mutation/raw/20261126T234238.353Z_IJRd6FouHzBOkUo2NL_PzwPcZGVtc6-yVxdfbkn1nQc.json"
+          },
+          {
+            "role": "analysis",
+            "title": "Mutation findings and limitations",
+            "snapshot": ".katatay/local/cursor-adapter/mutation/findings/20261126T234238.355Z_CVG_3hIZ_6Qnsgv2S91l0FZBhHjNtdPXnpMjwKRsdhk.json"
+          }
+        ],
+        "summary": {
+          "totalMutants": 1615,
+          "killed": 888,
+          "survived": 118,
+          "unproved": 464,
+          "ignored": 145,
+          "errored": 0
+        }
+      },
+      {
+        "name": "boundaries",
+        "status": "ok",
+        "reason": "clean",
+        "evidence": [
+          {
+            "role": "raw",
+            "title": "boundaries output",
+            "snapshot": ".katatay/local/cursor-adapter/checks/raw/20261127T000259.711Z_-VFjVmYjkrbymY1phZN2WB6eGvQvaHTO-oZNeBEejEY.txt"
+          }
+        ],
+        "summary": {
+          "outcome": "clean",
+          "exitCode": 0
+        }
+      },
+      {
+        "name": "secrets",
+        "status": "ok",
+        "reason": "clean",
+        "evidence": [
+          {
+            "role": "raw",
+            "title": "secrets output",
+            "snapshot": ".katatay/local/cursor-adapter/checks/raw/20261127T000300.338Z_XZ4TBTuQ4jdvjS36YogVfEB7apDPn9DHy2AwJnXc0pI.txt"
+          }
+        ],
+        "summary": {
+          "outcome": "clean",
+          "exitCode": 0
+        }
+      }
+    ],
+    "testFingerprint": "a4572727991d0ecaabcec3fce3e847f5bdb1ca07c5b295252e9d8e262e59a11f",
+    "implementationFingerprint": "f76d068673f9ad3f44ef51f2f4bb008df1ac8e4eb8bd5eba2ac6ed9df27b7ccc"
+  }
+}

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * `init` with every agent adapter this harness has: Claude Code and Codex.
+ * `init` with every agent adapter this harness has: Claude Code, Codex and Cursor.
  *
  * The referee knows no agent, so its `init` is told which adapters to set
  * up, as `--agent <label>=<defaults command>`. This launcher sits beside the
@@ -24,6 +24,7 @@ export const WORKFLOW = join(HERE, '..', 'workflow', 'cli', 'workflow.mjs');
 export const ADAPTERS = [
   ['claude', join(HERE, 'claude', 'defaults.mjs')],
   ['codex', join(HERE, 'codex', 'defaults.mjs')],
+  ['cursor', join(HERE, 'cursor', 'defaults.mjs')],
 ];
 
 /** The arguments `node` gets: the referee's `init`, every adapter, then `argv`. */

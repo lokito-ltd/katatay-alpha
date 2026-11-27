@@ -10,7 +10,7 @@ approve first, tests that prove the change, and a record you can review.
 Katatay allows you to focus on "What" with a high confidence that "How" will
 be delivered with a quality level of your choosing.
 
-Coding agents such as Claude Code and Codex write code fast. They also skip
+Coding agents such as Claude Code, Codex and Cursor write code fast. They also skip
 steps when nobody is watching. They edit a test until it passes, call a change
 done while the suite is red, drop a requirement that got in the way, or say
 "I ran the tests" when they did not. Asking them to behave in a prompt works
@@ -366,9 +366,9 @@ Most test tools can already write these formats. A check whose exit code is
 not in the map, or that crashes or runs past its time limit, counts as broken
 and fails verify. It never reads as clean.
 
-### Two agents, one referee
+### Three agents, one referee
 
-Claude Code and Codex each have an adapter that turns the referee's answers
+Claude Code, Codex and Cursor each have an adapter that turns the referee's answers
 into the agent's hook replies, and installs the workflow's instructions and
 skills where that agent reads them. The skills help the agent plan a change,
 write acceptance criteria and write the commit message.
@@ -384,8 +384,11 @@ would.
   session could rewrite the referee, record evidence it never earned, and put
   the files back. Only a reviewer reading the diff, and CI, stand in the way.
   The planned fix is an install owned by root.
-- **Two agents.** Claude Code and Codex. Each needs its hooks registered and
-  trusted. An agent without the hooks is not held at all.
+- **Three agents.** Claude Code, Codex and Cursor. Each needs its hooks
+  registered and trusted. An agent without the hooks is not held at all.
+  Cursor's adapter relies on two things Cursor does not document: the prompt
+  hook's context reaching the agent, and the wording of the prompt Build
+  sends. Both were captured under Cursor 3.32.10.
 - **One language adapter.** TypeScript, with Vitest, Stryker and the
   TypeScript 6 compiler API. Another language needs its own commands that
   write JUnit, LCOV and a standard mutation report, and none has been tried

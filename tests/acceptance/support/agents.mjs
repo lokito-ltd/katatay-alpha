@@ -80,3 +80,40 @@ export function codexWorkflowHooks(folder) {
     sourcePath, source: 'project', displayOrder: index, enabled: true, isManaged: false, trustStatus: 'trusted',
   }))));
 }
+
+// What Cursor sends each hook, as captured from a live session under 3.32.10.
+export function cursorPayload(folder, hook_event_name, fields) {
+  return {
+    conversation_id: '00000000-0000-4000-8000-000000000001',
+    generation_id: '00000000-0000-4000-8000-000000000002',
+    model: 'grok-4.7-medium', hook_event_name, cursor_version: '3.32.10',
+    workspace_roots: [folder.cwd], user_email: null, transcript_path: cursorTranscriptPath(folder), ...fields,
+  };
+}
+export const cursorTranscriptPath = folder =>
+  join(folder.env.HOME, '.cursor/projects/repo/agent-transcripts/00000000-0000-4000-8000-000000000001/00000000-0000-4000-8000-000000000001.jsonl');
+
+// The prompt Cursor sends when the operator clicks Build.
+export const cursorBuild = 'Implement the plan as specified, it is attached for your reference. Do NOT edit the plan file itself.\n\n'
+  + "To-do's from the plan have already been created. Do not create them again. Mark them as in_progress as you work, starting with the first one. "
+  + "Don't stop until you have completed all the to-dos.";
+
+// A conversation transcript in which the agent proposed each `{ name, plan }` with CreatePlan, one turn each.
+export function givenACursorTranscript(folder, plans) {
+  const lines = plans.flatMap(({ name, plan }) => [
+    { role: 'user', message: { content: [{ type: 'text', text: '<user_query>\nPlan it.\n</user_query>' }] } },
+    { role: 'assistant', message: { content: [{ type: 'text', text: 'Here is the plan.' }, { type: 'tool_use', name: 'CreatePlan', input: { name, overview: 'o', plan, todos: [] } }] } },
+    { type: 'turn_ended', status: 'success' },
+  ]).map(entry => JSON.stringify(entry));
+  const path = cursorTranscriptPath(folder);
+  mkdirSync(dirname(path), { recursive: true });
+  writeFileSync(path, lines.join('\n') + '\n');
+}
+
+// The copy of a plan Cursor saves in ~/.cursor/plans, frontmatter first.
+export function givenACursorSavedPlan(folder, name, body) {
+  const path = join(folder.env.HOME, '.cursor/plans', name.toLowerCase().replaceAll(' ', '_') + '_0fdd314f.plan.md');
+  mkdirSync(dirname(path), { recursive: true });
+  writeFileSync(path, `---\nname: ${name}\noverview: o\ntodos:\n  - id: a\n    content: Do it\n    status: pending\nisProject: false\n---\n\n${body}`);
+  return path;
+}

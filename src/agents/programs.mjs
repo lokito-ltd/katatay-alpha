@@ -3,7 +3,7 @@ import { packaged } from '../distribution.mjs';
 // Both the installed command dispatcher and the adapters use these names.
 // The user supplies an action name, never a path to execute.
 const scripts = new Map();
-for (const adapter of ['claude', 'codex']) {
+for (const adapter of ['claude', 'codex', 'cursor']) {
   const base = `src/agents/${adapter}`;
   for (const action of ['defaults', 'install', 'check']) {
     scripts.set(`${adapter} ${action}`, `${base}/${action}.mjs`);

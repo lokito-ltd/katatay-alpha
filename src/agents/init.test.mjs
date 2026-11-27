@@ -7,6 +7,7 @@ describe('the init launcher', () => {
       WORKFLOW, 'init',
       '--agent', `claude=node ${JSON.stringify(ADAPTERS[0][1])}`,
       '--agent', `codex=node ${JSON.stringify(ADAPTERS[1][1])}`,
+      '--agent', `cursor=node ${JSON.stringify(ADAPTERS[2][1])}`,
       '--project', 'p',
     ]);
   });

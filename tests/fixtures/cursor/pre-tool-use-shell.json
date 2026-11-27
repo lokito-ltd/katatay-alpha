@@ -1,0 +1,21 @@
+{
+  "conversation_id": "00000000-0000-4000-8000-000000000001",
+  "generation_id": "00000000-0000-4000-8000-000000000009",
+  "model": "grok-4.7",
+  "tool_name": "Shell",
+  "tool_input": {
+    "command": "ls",
+    "cwd": "",
+    "timeout": 30000
+  },
+  "tool_use_id": "00000000-0000-4000-8000-000000000010",
+  "cwd": "",
+  "session_id": "00000000-0000-4000-8000-000000000001",
+  "hook_event_name": "preToolUse",
+  "cursor_version": "3.32.10",
+  "workspace_roots": [
+    "{{REPO}}"
+  ],
+  "user_email": "operator@example.com",
+  "transcript_path": "{{HOME}}/.cursor/projects/repo/agent-transcripts/00000000-0000-4000-8000-000000000001/00000000-0000-4000-8000-000000000001.jsonl"
+}

@@ -90,13 +90,13 @@ it('runs the selected adapter action with the caller’s streams and its exit st
   expect(runReferee).toHaveBeenCalledWith(expect.stringMatching(/\/src\/agents\/claude\/hooks\/post-tool\.mjs$/), [], { stdio: 'inherit' });
 });
 
-it('initializes from the calling directory with both adapters and the supplied probe arguments', async () => {
+it('initializes from the calling directory with every adapter and the supplied probe arguments', async () => {
   vi.stubEnv('INIT_CWD', '/different-directory');
   expect(await invoke('init', '--project', 'relative', '--probe', '--scratch-module', 'src/scratch.ts',
     '--agent', 'demo-=echo ok')).toBe(0);
   expect(process.env.INIT_CWD).toBeUndefined();
   expect(runReferee).toHaveBeenCalledWith(expect.stringMatching(/\/cli\/init\.mjs$/), [
-    '--agent', 'claude=ktty agent claude defaults', '--agent', 'codex=ktty agent codex defaults',
+    '--agent', 'claude=ktty agent claude defaults', '--agent', 'codex=ktty agent codex defaults', '--agent', 'cursor=ktty agent cursor defaults',
     '--project', 'relative', '--probe', '--scratch-module', 'src/scratch.ts', '--agent', 'demo-=echo ok',
   ], { stdio: 'inherit' });
 });

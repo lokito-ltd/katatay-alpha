@@ -2,11 +2,11 @@
 status: active
 ---
 
-`ktty agent <claude|codex> <action>` runs exactly that adapter action with the caller's streams and exit status, and refuses anything else with exit 2.
+`ktty agent <claude|codex|cursor> <action>` runs exactly that adapter action with the caller's streams and exit status, and refuses anything else with exit 2.
 
 ## Scenarios
 
-- [AC0067.1] Claude accepts defaults, install, check, pre-tool, user-prompt, post-tool and turn-end, and Codex accepts all but post-tool.
+- [AC0067.1] Claude accepts defaults, install, check, pre-tool, user-prompt, post-tool and turn-end, and Codex and Cursor accept all but post-tool.
 - [AC0067.2] An unknown adapter, an unknown action, a path-like action or a missing action exits 2 without starting anything.
 - [AC0067.3] The action runs with the caller's stdin and stdout, and its exit status is returned.
 - [AC0067.4] check prints a versioned list of warnings and exits 0.

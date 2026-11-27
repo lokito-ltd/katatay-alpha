@@ -53,7 +53,7 @@ gives for each.
 | `workflow report` | `npm run report` |
 | `workflow mutate` | `npm run mutate` |
 | `workflow defaults <command>` | `npm run agent:defaults`, for the Claude adapter |
-| `workflow init` | `npm run workflow-init`, with both agent adapters; to set up another project from this source, run `npm --prefix <this checkout> run workflow-init` in that project, or pass `-- --project <dir>`; add `-- --probe` to run the rulebook's commands and write nothing |
+| `workflow init` | `npm run workflow-init`, with every agent adapter; to set up another project from this source, run `npm --prefix <this checkout> run workflow-init` in that project, or pass `-- --project <dir>`; add `-- --probe` to run the rulebook's commands and write nothing |
 
 And the ones that are this project's own:
 

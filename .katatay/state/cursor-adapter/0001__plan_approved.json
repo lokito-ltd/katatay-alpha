@@ -1,0 +1,45 @@
+{
+  "version": 1,
+  "seq": 1,
+  "prev": null,
+  "ts": "2026-11-26T23:05:23.173Z",
+  "event": "plan_approved",
+  "payload": {
+    "proposal": "f02c840b833554afcd32f087bbec728fc24f5896aa6473a942f9c63b38b29c05",
+    "testOnly": false,
+    "requirementChanges": [
+      {
+        "id": "AC0067",
+        "status": "active",
+        "statement": "`ktty agent <claude|codex|cursor> <action>` runs exactly that adapter action with the caller's streams and exit status, and refuses anything else with exit 2.",
+        "scenarios": [
+          "[AC0067.1] Claude accepts defaults, install, check, pre-tool, user-prompt, post-tool and turn-end, and Codex and Cursor accept all but post-tool.",
+          "[AC0067.2] An unknown adapter, an unknown action, a path-like action or a missing action exits 2 without starting anything.",
+          "[AC0067.3] The action runs with the caller's stdin and stdout, and its exit status is returned.",
+          "[AC0067.4] check prints a versioned list of warnings and exits 0.",
+          "[AC0067.5] check exits 2 for a request that does not match."
+        ]
+      },
+      {
+        "id": "AC0076",
+        "status": "active",
+        "statement": "The Cursor hooks gate Write, Delete and Shell, take the plan approval from Build's prompt and the plan Cursor saved, give the agent the workflow's context on every prompt, and answer stop with a follow-up only when there is more to do.",
+        "scenarios": [
+          "[AC0076.1] A Write is checked as a write of its file and a Delete as a delete, so a requirement cannot be deleted in any phase.",
+          "[AC0076.2] A write the referee refuses is denied with the referee's reason for the agent.",
+          "[AC0076.3] Build saves the plan Cursor kept for it, without its frontmatter, to a new file in the plans folder, and the approval is recorded.",
+          "[AC0076.4] A Build with no plan in the conversation records nothing and tells the operator.",
+          "[AC0076.5] Every prompt gives the agent the workflow state as additional context.",
+          "[AC0076.6] The stop hook prints an empty object when it has nothing to say.",
+          "[AC0076.7] A stop the referee refuses is answered with a follow-up message.",
+          "[AC0076.8] The Claude Code workflow hooks answer nothing when Cursor runs them.",
+          "[AC0076.9] A Cursor workflow hook missing from .cursor/hooks.json is reported.",
+          "[AC0076.10] An extra stop or prompt hook in a Cursor hooks file is reported as able to send the approval."
+        ]
+      }
+    ],
+    "planSnapshot": ".katatay/local/cursor-adapter/plans/20261126T230523.165Z_8CyEC4M1VK_NMvCHu-xyj8JPWJaqZHOpQvnGOziynAU.md",
+    "baseline": "ddaa18b3286ba830ecd5bb3b04488125c67cbde2"
+  },
+  "branch": "cursor-adapter"
+}

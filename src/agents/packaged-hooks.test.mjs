@@ -6,6 +6,9 @@ import { setupWarnings } from './codex/setup.mjs';
 import { payload } from '../../tests/fixtures/codex/payloads.mjs';
 import { proposal as claudeProposal } from './claude/proposal.mjs';
 import { proposal as codexProposal } from './codex/proposal.mjs';
+import { proposal as cursorProposal } from './cursor/proposal.mjs';
+import { stopTimeout as cursorTimeout } from './cursor/registration.mjs';
+import { setupWarnings as cursorWarnings } from './cursor/setup.mjs';
 import { agentCommand } from './programs.mjs';
 
 vi.mock('../distribution.mjs', () => ({ packaged: true }));
@@ -64,4 +67,18 @@ it('accepts the three project hooks in a Codex listing and reports a substituted
 
 it('refuses to emit an adapter command for an unknown program', () => {
   expect(() => agentCommand('src/agents/claude/other.mjs')).toThrow('Unknown agent script');
+});
+
+it('names the installed Cursor commands, and accepts exactly those in the check and the stop timeout', () => {
+  const { commands, registration } = cursorProposal('/consumer');
+  expect(commands).toEqual({ check: 'ktty agent cursor check', install: 'ktty agent cursor install' });
+  const file = JSON.parse(registration.text);
+  expect(file.hooks.preToolUse[0].command).toBe('ktty agent cursor pre-tool');
+  expect(file.hooks.beforeSubmitPrompt[0].command).toBe('ktty agent cursor user-prompt');
+  expect(file.hooks.stop[0].command).toBe('ktty agent cursor turn-end');
+  expect(cursorTimeout(registration.text)).toBe(900);
+  expect(cursorWarnings({ files: { '.cursor/hooks.json': registration.text }, extraHooks: { acknowledged: [] }, instructions: true })).toEqual([]);
+  file.hooks.stop[0].command = 'echo ktty agent cursor turn-end';
+  expect(cursorWarnings({ files: { '.cursor/hooks.json': JSON.stringify(file) }, extraHooks: { acknowledged: [] }, instructions: true }).join('\n'))
+    .toContain('does not register the workflow\'s stop hook');
 });

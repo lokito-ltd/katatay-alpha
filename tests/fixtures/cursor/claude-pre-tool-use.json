@@ -1,0 +1,19 @@
+{
+  "conversation_id": "00000000-0000-4000-8000-000000000001",
+  "generation_id": "00000000-0000-4000-8000-000000000002",
+  "model": "grok-4.7",
+  "tool_name": "Write",
+  "tool_input": {
+    "file_path": "{{REPO}}/notes.txt",
+    "content": "first line\nsecond line\n"
+  },
+  "tool_use_id": "call-00000000-0000-4000-8000-000000000003-2\nfc_00000000-0000-4000-8000-000000000004_0",
+  "session_id": "00000000-0000-4000-8000-000000000001",
+  "hook_event_name": "preToolUse",
+  "cursor_version": "3.32.10",
+  "workspace_roots": [
+    "{{REPO}}"
+  ],
+  "user_email": "operator@example.com",
+  "transcript_path": null
+}

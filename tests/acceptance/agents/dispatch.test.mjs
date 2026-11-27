@@ -5,27 +5,30 @@ import { whenDirectoryIsListed } from '../support/project.mjs';
 
 const usage = ['Usage: ktty agent <adapter> <action>.', "Run 'ktty help' for usage."];
 
-it('Claude accepts defaults, install, check, pre-tool, user-prompt, post-tool and turn-end, and Codex accepts all but post-tool. [AC0067.1]', () => {
+it('Claude accepts defaults, install, check, pre-tool, user-prompt, post-tool and turn-end, and Codex and Cursor accept all but post-tool. [AC0067.1]', () => {
   const folder = givenAGitRepository();
   const accepted = [
     ...['defaults', 'install', 'check', 'pre-tool', 'user-prompt', 'post-tool', 'turn-end'].map(action => ['claude', action]),
     ...['defaults', 'install', 'check', 'pre-tool', 'user-prompt', 'turn-end'].map(action => ['codex', action]),
+    ...['defaults', 'install', 'check', 'pre-tool', 'user-prompt', 'turn-end'].map(action => ['cursor', action]),
   ];
 
   for (const [adapter, action] of accepted) {
     const run = whenKttyRuns(['agent', adapter, action], { in: folder, input: 'not json' });
     thenOmits(run.stderr, usage[0], adapter + ' ' + action);
   }
-  const refused = whenKttyRuns(['agent', 'codex', 'post-tool'], { in: folder, input: '{}' });
-  thenItExits(refused, 2);
-  thenItPrintsError(refused, usage);
+  for (const adapter of ['codex', 'cursor']) {
+    const refused = whenKttyRuns(['agent', adapter, 'post-tool'], { in: folder, input: '{}' });
+    thenItExits(refused, 2);
+    thenItPrintsError(refused, usage);
+  }
 });
 
 it('An unknown adapter, an unknown action, a path-like action or a missing action exits 2 without starting anything. [AC0067.2]', () => {
   const folder = givenAGitRepository();
   const before = whenDirectoryIsListed(folder.cwd);
 
-  for (const args of [['cursor', 'check'], ['claude', 'deploy'], ['claude', 'hooks/pre-tool'], ['claude', '../codex/check'], ['claude']]) {
+  for (const args of [['gemini', 'check'], ['claude', 'deploy'], ['claude', 'hooks/pre-tool'], ['claude', '../codex/check'], ['claude']]) {
     const run = whenKttyRuns(['agent', ...args], { in: folder, input: '{}' });
     thenItExits(run, 2);
     thenItPrintsError(run, usage);
@@ -48,7 +51,7 @@ it("The action runs with the caller's stdin and stdout, and its exit status is r
 it('check prints a versioned list of warnings and exits 0. [AC0067.4]', () => {
   const folder = givenAGitRepository();
 
-  for (const adapter of ['claude', 'codex']) {
+  for (const adapter of ['claude', 'codex', 'cursor']) {
     const run = whenKttyRuns(['agent', adapter, 'check'], {
       in: folder, input: JSON.stringify({ version: 1, root: folder.cwd, extraHooks: null }), env: { CI: 'true' },
     });
@@ -77,7 +80,7 @@ it('check exits 2 for a request that does not match. [AC0067.5]', () => {
     [{ version: 1, root, extraHooks: { acknowledged: [{ event: 'Stop' }] } }, 'check: refused, `extraHooks` must be null or { acknowledged: [{ event, matcher, command }] }.'],
   ];
 
-  for (const adapter of ['claude', 'codex']) {
+  for (const adapter of ['claude', 'codex', 'cursor']) {
     for (const [request, refusal] of requests) {
       const input = typeof request === 'string' ? request : JSON.stringify(request);
       const run = whenKttyRuns(['agent', adapter, 'check'], { in: folder, input });

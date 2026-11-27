@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "seq": 8,
+  "prev": "5e4e395bdafe8f335a6365f9bc5c943492aacb852fc958e411b300acf74e8be8",
+  "ts": "2026-11-27T00:05:09.104Z",
+  "event": "recorded",
+  "payload": {
+    "treeFingerprint": "735996d52cc1f80324c3a05426037f7e89e0fa791d9335834267de9669e0dfd6",
+    "changes": "90a4e41e3baa56a422180ce232e0b5bd6aedca82b2c16ac44230dfbc33013bd9",
+    "files": [
+      "requirements/changes/20261127T000419Z__cursor_adapter.md"
+    ]
+  }
+}

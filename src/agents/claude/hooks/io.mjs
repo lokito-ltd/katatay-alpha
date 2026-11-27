@@ -88,6 +88,21 @@ export async function leave() {
 }
 
 /**
+ * How a hook exits when Cursor started it (see `cursor.mjs`): with `{}` and
+ * nothing else, no drift warning either, since Cursor's payload is not
+ * Claude Code's and every field this hook reads would look missing. Cursor
+ * blocks a tool call when a permission hook prints something that is not
+ * JSON, so an empty object, never silence.
+ *
+ * @returns {Promise<never>}
+ */
+export async function standAside() {
+  said = true;
+  await write({});
+  process.exit(0);
+}
+
+/**
  * The same warning, for a hook that crashes before it reaches `leave`. Nothing
  * can wait for the write here, so a long warning may be cut short, but a short
  * one still gets through.

@@ -59,7 +59,7 @@ it("Help starts with 'Usage: ktty <command> [arguments]' and lists every availab
     'on turn-end',
     'agent claude post-tool',
   ];
-  for (const adapter of ['claude', 'codex']) {
+  for (const adapter of ['claude', 'codex', 'cursor']) {
     for (const action of ['defaults', 'install', 'check', 'pre-tool', 'user-prompt', 'turn-end']) {
       expected.push(`agent ${adapter} ${action}`);
     }

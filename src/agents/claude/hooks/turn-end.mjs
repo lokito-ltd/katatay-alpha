@@ -9,7 +9,8 @@
  * because a hook that overruns is killed and its whole message is lost.
  */
 import { readFileSync } from 'node:fs';
-import { input, send, leave } from './io.mjs';
+import { input, standAside, send, leave } from './io.mjs';
+import { runByCursor } from './cursor.mjs';
 import { expectFields } from './drift.mjs';
 import { runaway } from './runaway.mjs';
 import { stopTimeout } from '../registration.mjs';
@@ -37,6 +38,8 @@ try {
   send({ via: 'block', text: `The workflow turn-end hook failed, so nothing was verified: ${error.message}` });
   await leave();
 }
+// Cursor runs this file too, beside its own adapter's hooks. Leave it to those.
+if (runByCursor(hook)) await standAside();
 expectFields(hook, {
   stop_hook_active: 'a block here can no longer be one-shot, and a turn could be held in a loop',
 });

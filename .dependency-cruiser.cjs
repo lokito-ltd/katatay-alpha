@@ -55,14 +55,14 @@ module.exports = {
     {
       name: 'hooks-talk-through-commands',
       comment:
-        'The agent adapters\' hooks, for Claude Code and for Codex, hold no workflow rules. Each translates what its ' +
+        'The agent adapters\' hooks, for Claude Code, Codex and Cursor, hold no workflow rules. Each translates what its ' +
         'agent sends into the input of a referee command (`workflow.mjs on <moment>`), starts it through ' +
         'hooks/referee.mjs, and translates the answer back. A hook that imported the referee would put the rules back ' +
         'in the adapter, where every other agent would have to copy them. Checked through other files too, so a ' +
         'helper cannot bring the referee in. See src/agents/README.md.',
       severity: 'error',
       from: {
-        path: '^src/agents/(claude|codex)/hooks/',
+        path: '^src/agents/(claude|codex|cursor)/hooks/',
         pathNot: ['\\.test\\.[cm]?[jt]sx?$'],
       },
       to: {

@@ -1,0 +1,54 @@
+[
+  {
+    "role": "user",
+    "message": {
+      "content": [
+        {
+          "type": "text",
+          "text": "<timestamp>Thursday, Nov 26, 2026, 6:53 PM (UTC-4)</timestamp>\n<user_query>\nPlan adding a file hello.txt containing \"hi\".\n</user_query>"
+        }
+      ]
+    }
+  },
+  {
+    "role": "assistant",
+    "message": {
+      "content": [
+        {
+          "type": "text",
+          "text": "The request is a single new file with fixed contents. I'll write a short plan for that."
+        },
+        {
+          "type": "tool_use",
+          "name": "CreatePlan",
+          "input": {
+            "name": "Add hello.txt",
+            "overview": "Add a new file hello.txt in the workspace root whose entire contents are the text hi.",
+            "plan": "# Add hello.txt\n\nCreate [hello.txt](hello.txt) in the workspace root with exactly this content:\n\n```\nhi\n```\n\nNo other files change. `hello.txt` is not present in the current workspace listing (`README.md`, `capture`, `deny-me.txt`, `notes.txt`, `requirements`).",
+            "todos": [
+              {
+                "id": "write-hello",
+                "content": "Create hello.txt containing hi"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  {
+    "type": "turn_ended",
+    "status": "success"
+  },
+  {
+    "role": "user",
+    "message": {
+      "content": [
+        {
+          "type": "text",
+          "text": "<timestamp>Thursday, Nov 26, 2026, 6:54 PM (UTC-4)</timestamp>\n<user_query>\nAdd hello.txt\n\nImplement the plan as specified, it is attached for your reference. Do NOT edit the plan file itself.\n\nTo-do's from the plan have already been created. Do not create them again. Mark them as in_progress as you work, starting with the first one. Don't stop until you have completed all the to-dos.\n</user_query>"
+        }
+      ]
+    }
+  }
+]

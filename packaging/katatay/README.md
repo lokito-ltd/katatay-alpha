@@ -4,10 +4,10 @@
 
 Katatay checks changes against a project's requirements, tests and rulebook. It runs on Node.js 22.12 or later and uses Git.
 
-From the source checkout, run `npm ci` and `npm run pack:katatay`. Install the resulting archive in your user-owned global npm prefix, with its bin directory on PATH for your shell and both agents:
+From the source checkout, run `npm ci` and `npm run pack:katatay`. Install the resulting archive in your user-owned global npm prefix, with its bin directory on PATH for your shell and both agents. Replace `<version>` with the version in the archive's name:
 
 ```sh
-archive="$PWD/dist/katatay-0.1.0.tgz"
+archive="$PWD/dist/katatay-<version>.tgz"
 npm install -g --foreground-scripts --allow-scripts="file:$archive" "$archive"
 ktty version
 ```

@@ -350,6 +350,13 @@ someone picks it up. Remove an item once a change file records it.
   alias, or update it when TypeScript 7 is supported. Keep the boundary rules
   and their tests intact. Raised 2026-11-02.
 
+- **Make the release tarball reproducible across machines.** Two builds of one
+  commit on one machine give the same bytes, because npm pins every file's
+  date and mode. Across machines, a different npm or zlib can compress the
+  same files differently, so nobody can rebuild a release from source and
+  match its hash. Pin Node and npm in `.github/workflows/build.yml`, and have
+  the job build twice and fail when the hashes differ. Raised 2026-11-27.
+
 ## Open questions
 
 Questions to settle before anything is built. Each becomes a task above once

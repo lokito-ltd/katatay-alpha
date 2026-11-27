@@ -1,0 +1,48 @@
+{
+  "version": 1,
+  "seq": 2,
+  "prev": "4d26b8a8474e443fde3c3b9c207f661762c11e9767c036ea66af1da16c555921",
+  "ts": "2026-11-27T20:07:32.761Z",
+  "event": "triaged",
+  "payload": {
+    "treeFingerprint": "a90c030e97c7f08d05ae6a10f6d2906c51d87b17bc627381fdad9c1469e65559",
+    "implementationFingerprint": "95973eac24f46240712fab1e1ef6970fe7d5c4c36ae3c9d99a97580c07e29590",
+    "level": "LOW",
+    "reasons": [],
+    "evidence": [
+      {
+        "role": "raw",
+        "title": "JUnit: reports/junit/fast.xml",
+        "snapshot": ".katatay/local/build-and-sign/junit/20261127T200732.414Z_n47zIrulmTDGnyPUf0YqvrZPmCt67bELae7P1GlWlQ4.xml"
+      },
+      {
+        "role": "raw",
+        "title": "JUnit: reports/junit/slow.xml",
+        "snapshot": ".katatay/local/build-and-sign/junit/20261127T200732.417Z_odQG3Gei2vPl_fspgKrt0PZ2hluPzKZ0Ntt0ITl8VKI.xml"
+      },
+      {
+        "role": "analysis",
+        "title": "Triage analysis",
+        "snapshot": ".katatay/local/build-and-sign/triage/20261127T200732.759Z_Admp90ZmG05X1qLqMtMwneMEVgXtmbePE1xPkD4gguQ.json"
+      }
+    ],
+    "testCount": 4703,
+    "predicted": {
+      "failed": 11,
+      "total": 11
+    },
+    "surprise": {
+      "failed": 0,
+      "total": 4735
+    },
+    "overPredicted": {
+      "count": 0,
+      "total": 11
+    },
+    "notRun": {
+      "predicted": 0,
+      "unpredicted": 0
+    },
+    "implemented": true
+  }
+}

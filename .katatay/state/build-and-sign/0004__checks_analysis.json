@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "seq": 4,
+  "prev": "4b7edeebd4a04533277f37a759f7fc5e754150cce0442a3707d5c193d0dc257c",
+  "ts": "2026-11-27T20:19:56.711Z",
+  "event": "checks_analysis",
+  "payload": {
+    "verification": 3,
+    "summary": "33 mutants survived. 8 are real gaps in the version tests: add eight conversion cases to src/katatay/release.test.mjs (a numeric pre-release such as 1.0.0-1 and 1.0.0-10, an identifier such as 1a, later identifiers such as rc.10, rc.2b and rc.beta, a count of 12 commits, and a description with text before the v). 17 survived only because the two regular expressions in release.mjs are built once when the module loads, so Stryker never switched them on: re-applying each one by hand against the existing test cases changes a result. Moving the regexes into releaseFromDescription would let mutation measure them, but that is an implementation change and needs a revised plan; the operator decides whether it is worth one. The other 8 have no observable effect: an empty encoding or stdio entry gives Node's defaults, which read the same text, and git describe reads no stdin. Optionally assert the staged package.json ends with a newline.",
+    "analysisSnapshot": ".katatay/local/build-and-sign/checks-analysis/20261127T201956.708Z_ST1gwQ6hEkiiQVzyLPfRgRNA6_0ch8LuDN28M1z6GDY.txt"
+  }
+}

@@ -23,7 +23,15 @@ function dispatch() {
     return 0;
   }
   if (verb === 'version') {
-    console.log(`Katatay ${releaseVersion(root, packaged)}\nSchema ${HARNESS_SCHEMA_VERSION}`);
+    // A source checkout without its tags cannot name its release.
+    let release;
+    try {
+      release = releaseVersion(root, packaged);
+    } catch (error) {
+      console.error(error.message);
+      return 1;
+    }
+    console.log(`Katatay ${release}\nSchema ${HARNESS_SCHEMA_VERSION}`);
     return 0;
   }
   if (verb === 'path') {

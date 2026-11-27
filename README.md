@@ -30,7 +30,7 @@ through, and [Features](#features) for how each part works.
 1. **Install Katatay.** In a terminal:
 
    ```sh
-   url="https://github.com/lokito-ltd/katatay-alpha/releases/download/v0.1.0/katatay-0.1.0.tgz"
+   url="https://github.com/lokito-ltd/katatay-alpha/releases/latest/download/katatay.tgz"
    npm install -g --foreground-scripts --allow-scripts="$url" "$url"
    ktty version
    ```
@@ -83,14 +83,14 @@ later. The command is `ktty`.
 Install from a GitHub Release:
 
 ```sh
-url="https://github.com/lokito-ltd/katatay-alpha/releases/download/v0.1.0/katatay-0.1.0.tgz"
+url="https://github.com/lokito-ltd/katatay-alpha/releases/latest/download/katatay.tgz"
 npm install -g --foreground-scripts --allow-scripts="$url" "$url"
 ktty version
 ```
 
 What each line does:
 
-- The first line names the release file on GitHub.
+- The first line names the latest release's tarball on GitHub.
 - The second installs it as a global npm package, which gives you the `ktty`
   command. `--allow-scripts` lets this one package run its install script,
   and `--foreground-scripts` shows you what that script prints.
@@ -114,13 +114,29 @@ Two things to check:
 ### Installing from a file
 
 To install a tarball you built or downloaded, give npm its **absolute** path.
-npm 11 reads a relative path such as `dist/katatay-0.1.0.tgz` as a Git
-repository and fails:
+npm 11 reads a relative path such as `dist/katatay-0.2.0.tgz` as a Git
+repository and fails. Replace `<version>` with the version in the file's name:
 
 ```sh
-archive="$PWD/dist/katatay-0.1.0.tgz"
+archive="$PWD/dist/katatay-<version>.tgz"
 npm install -g --foreground-scripts --allow-scripts="file:$archive" "$archive"
 ```
+
+### Checking a download
+
+Every release tarball is signed by the GitHub workflow that built it, so you
+can check that a file came from this repository's build and was not changed
+since. With the GitHub CLI:
+
+```sh
+curl -sSfLO https://github.com/lokito-ltd/katatay-alpha/releases/latest/download/katatay.tgz
+gh attestation verify katatay.tgz --repo lokito-ltd/katatay-alpha
+```
+
+It prints the commit and the workflow that built the file, and fails for a file
+built anywhere else. Then install the file as above. Each change merged into
+`main` is built and signed the same way; its tarball is on the build
+workflow's run. Release 0.1.0 was built by hand and has no signature.
 
 ### Finding the installed files
 

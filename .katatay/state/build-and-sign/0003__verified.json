@@ -1,0 +1,235 @@
+{
+  "version": 1,
+  "seq": 3,
+  "prev": "e47bda9d3e1bfe4654ca7da6391f0d6c71c07d8c5e47391f458d3bef2c6ad6f3",
+  "ts": "2026-11-27T20:17:33.357Z",
+  "event": "verified",
+  "payload": {
+    "treeFingerprint": "25168e5ec20a0d6379b93699340e6af381cbe8e3a534800f291c6663a1c7785f",
+    "baseline": "f9dc55e49ac0acacad227bad30b8a016163dec14",
+    "rulebookFingerprint": "8038845ed05833911d41f907135e56037ae68d20b8f7b5aa12ddeeb2da20e9cc",
+    "results": [
+      {
+        "name": "req:lint",
+        "status": "ok",
+        "reason": "Check passed.",
+        "evidence": [],
+        "summary": {
+          "outcome": "clean"
+        }
+      },
+      {
+        "name": "req:guard",
+        "status": "ok",
+        "reason": "Check passed.",
+        "evidence": [],
+        "summary": {
+          "outcome": "clean"
+        }
+      },
+      {
+        "name": "state:verify",
+        "status": "ok",
+        "reason": "Check passed.",
+        "evidence": [],
+        "summary": {
+          "outcome": "clean"
+        }
+      },
+      {
+        "name": "compile",
+        "status": "ok",
+        "reason": "Check passed.",
+        "evidence": [],
+        "summary": {
+          "outcome": "clean"
+        }
+      },
+      {
+        "name": "tests",
+        "status": "ok",
+        "reason": "Check passed.",
+        "evidence": [
+          {
+            "role": "raw",
+            "title": "JUnit: reports/junit/fast.xml",
+            "snapshot": ".katatay/local/build-and-sign/junit/20261127T201715.482Z_xyJOTBN08Xz1afDO3tQD5Df8wF2dx_RZ7x-3mE7chBE.xml"
+          },
+          {
+            "role": "raw",
+            "title": "JUnit: reports/junit/slow.xml",
+            "snapshot": ".katatay/local/build-and-sign/junit/20261127T201715.485Z_ZGRtZ0ouzkoXkstJNqEKyU2E_u2XKcSFZzrGVvUYQQY.xml"
+          },
+          {
+            "role": "analysis",
+            "title": "Parsed test run and execution metadata",
+            "snapshot": ".katatay/local/build-and-sign/junit/analysis/20261127T201715.633Z_Lqpkrwx26uz0uQyAHIp-yjDZUqTOSa7GvxBYX-x7jgs.json"
+          }
+        ],
+        "summary": {
+          "total": 4786,
+          "passed": 4786,
+          "failed": 0,
+          "skipped": 0,
+          "inverted": 0,
+          "omittedFiles": 0
+        }
+      },
+      {
+        "name": "req:trace",
+        "status": "ok",
+        "reason": "Check passed.",
+        "evidence": [],
+        "summary": {
+          "outcome": "clean"
+        }
+      },
+      {
+        "name": "coverage",
+        "status": "ok",
+        "reason": "every folder is at or above its minimum",
+        "evidence": [
+          {
+            "role": "raw",
+            "title": "Raw LCOV coverage",
+            "snapshot": ".katatay/local/build-and-sign/coverage/20261127T201716.084Z_JZByNxczUKANvhpTvEPQmTte4ZE8aJBoozWMa8xD338.lcov"
+          },
+          {
+            "role": "analysis",
+            "title": "Coverage thresholds and changed lines",
+            "snapshot": ".katatay/local/build-and-sign/coverage/20261127T201716.085Z_PgKLi7Qnu8N4j7UL7NcHcM0esA0_w2qR0jBU81GIQDo.json"
+          }
+        ],
+        "summary": {
+          "folders": [
+            {
+              "folder": "src/",
+              "lines": {
+                "percent": 100,
+                "target": 100
+              },
+              "branches": {
+                "percent": 100,
+                "target": 100
+              }
+            },
+            {
+              "folder": "src/adapters/",
+              "lines": {
+                "percent": 94,
+                "target": 93.5
+              },
+              "branches": {
+                "percent": 93.4,
+                "target": 92.5
+              }
+            },
+            {
+              "folder": "src/evidence/",
+              "lines": {
+                "percent": 97.5,
+                "target": 96
+              },
+              "branches": {
+                "percent": 95.8,
+                "target": 93.5
+              }
+            },
+            {
+              "folder": "src/requirements/",
+              "lines": {
+                "percent": 96.4,
+                "target": 96
+              },
+              "branches": {
+                "percent": 91.6,
+                "target": 90.5
+              }
+            },
+            {
+              "folder": "src/workflow/",
+              "lines": {
+                "percent": 96.5,
+                "target": 89.5
+              },
+              "branches": {
+                "percent": 95,
+                "target": 87.5
+              }
+            },
+            {
+              "folder": "src/agents/",
+              "lines": {
+                "percent": 74.9,
+                "target": 71
+              },
+              "branches": {
+                "percent": 78,
+                "target": 75
+              }
+            }
+          ]
+        }
+      },
+      {
+        "name": "mutation",
+        "status": "ok",
+        "reason": "86 mutants, 53 caught, 33 survived",
+        "evidence": [
+          {
+            "role": "raw",
+            "title": "Raw mutation results",
+            "snapshot": ".katatay/local/build-and-sign/mutation/raw/20261127T201731.381Z_3Avm39vKLOHrTSTS-as7G_KU77bGxwZofIkgpBvTy9Q.json"
+          },
+          {
+            "role": "analysis",
+            "title": "Mutation findings and limitations",
+            "snapshot": ".katatay/local/build-and-sign/mutation/findings/20261127T201731.382Z_YSPfXu2MieUrRsMWAz8cAXUCDOVBUv3Nd7RMgubdSD8.json"
+          }
+        ],
+        "summary": {
+          "totalMutants": 86,
+          "killed": 53,
+          "survived": 33,
+          "unproved": 0,
+          "ignored": 0,
+          "errored": 0
+        }
+      },
+      {
+        "name": "boundaries",
+        "status": "ok",
+        "reason": "clean",
+        "evidence": [
+          {
+            "role": "raw",
+            "title": "boundaries output",
+            "snapshot": ".katatay/local/build-and-sign/checks/raw/20261127T201732.644Z_r0lyqUTv3SO1JeYDTEpDZKRzZH3w8OgrCfWWZCqPra8.txt"
+          }
+        ],
+        "summary": {
+          "outcome": "clean",
+          "exitCode": 0
+        }
+      },
+      {
+        "name": "secrets",
+        "status": "ok",
+        "reason": "clean",
+        "evidence": [
+          {
+            "role": "raw",
+            "title": "secrets output",
+            "snapshot": ".katatay/local/build-and-sign/checks/raw/20261127T201733.166Z_Ft7iV-ddeAnt3j2VyXscP84IdHIGdBuI4CyB6-TpYVA.txt"
+          }
+        ],
+        "summary": {
+          "outcome": "clean",
+          "exitCode": 0
+        }
+      }
+    ],
+    "testFingerprint": "f05c8ffe9985e4898477e27fb8aa6fc5d7a1cba8b17d113caf6581fe84155ead",
+    "implementationFingerprint": "95973eac24f46240712fab1e1ef6970fe7d5c4c36ae3c9d99a97580c07e29590"
+  }
+}

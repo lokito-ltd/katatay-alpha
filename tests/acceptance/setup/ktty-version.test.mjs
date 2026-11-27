@@ -15,7 +15,7 @@ it('ktty version prints the release and the schema version on two lines, and exi
   const run = whenKttyRuns(['version'], { in: folder });
 
   thenItExits(run, 0);
-  thenItPrintsLines(run, [/^Katatay \d+\.\d+\.\d+$/, /^Schema \d+$/]);
+  thenItPrintsLines(run, [/^Katatay \d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$/, /^Schema \d+$/]);
 });
 
 it('ktty version answers in a folder that is not a project. [AC0001.2]', () => {
@@ -24,7 +24,7 @@ it('ktty version answers in a folder that is not a project. [AC0001.2]', () => {
   const run = whenKttyRuns(['version'], { in: folder });
 
   thenItExits(run, 0);
-  thenItPrintsLines(run, [/^Katatay \d+\.\d+\.\d+$/, /^Schema \d+$/]);
+  thenItPrintsLines(run, [/^Katatay \d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$/, /^Schema \d+$/]);
 });
 
 it('ktty version with an argument exits 2 and prints the correct invocation and help hint on stderr. [AC0001.3]', () => {
@@ -43,7 +43,7 @@ it('ktty version with an argument exits 2 and prints the correct invocation and 
 
   const retry = whenKttyRuns(suggested[0], { in: folder });
   thenItExits(retry, 0);
-  thenItPrintsLines(retry, [/^Katatay \d+\.\d+\.\d+$/, /^Schema \d+$/]);
+  thenItPrintsLines(retry, [/^Katatay \d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$/, /^Schema \d+$/]);
 
   const help = whenKttyRuns(suggested[1], { in: folder });
   thenItExits(help, 0);

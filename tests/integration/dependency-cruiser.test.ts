@@ -62,6 +62,13 @@ const planted: Record<string, string> = {
   'src/agents/claude/deep.mjs': 'export const deep = 1;\n',
   'tests/support/machine/uses-agent.mjs': "import { hook } from '../../agents/claude/hook.mjs';\nexport const u = hook;\n",
   'src/workflow/uses-agent.test.mjs': "import { hook } from '../agents/claude/hook.mjs';\nexport const t = hook;\n",
+  // Each agent adapter's hooks, which may reach the referee only through its
+  // commands, and a hook's own test, which may import it. See
+  // `hooks-talk-through-commands`.
+  'src/agents/claude/hooks/rule.mjs': "import { ok } from '../../../workflow/plain.mjs';\nexport const r = ok;\n",
+  'src/agents/codex/hooks/rule.mjs': "import { ok } from '../../../workflow/plain.mjs';\nexport const r = ok;\n",
+  'src/agents/cursor/hooks/rule.mjs': "import { ok } from '../../../workflow/plain.mjs';\nexport const r = ok;\n",
+  'src/agents/cursor/hooks/rule.test.mjs': "import { ok } from '../../../workflow/plain.mjs';\nexport const t = ok;\n",
   'src/evidence/mutants.ts': "import { Stryker } from '@stryker-mutator/core';\nexport const m = Stryker;\n",
   // A mutation sandbox: a copy of the repository, which breaks the rules as
   // the repository's own files would, and holds type files the parser cannot
@@ -125,6 +132,17 @@ describe('boundaries', () => {
     expect(found).toContain('referee-is-agent-free: src/requirements/indirect-agent.ts → src/agents/claude/deep.mjs');
   });
 
+  // A hook that imported the referee would hold the workflow's rules, which
+  // every other agent would then have to copy. Each adapter's hooks are held
+  // to it, the Cursor adapter's included.
+  it('refuses an agent adapter\'s hooks importing the referee, and lets their tests', () => {
+    expect(found.filter((line) => line.startsWith('hooks-talk-through-commands'))).toEqual([
+      'hooks-talk-through-commands: src/agents/claude/hooks/rule.mjs → src/workflow/plain.mjs',
+      'hooks-talk-through-commands: src/agents/codex/hooks/rule.mjs → src/workflow/plain.mjs',
+      'hooks-talk-through-commands: src/agents/cursor/hooks/rule.mjs → src/workflow/plain.mjs',
+    ]);
+  });
+
   // The cases above are each found. This is the other direction: everything
   // the rules allow stays allowed, so the list is exactly what was planted to
   // fail. A test, the machine suite's harness and the adapter itself may all
@@ -134,6 +152,9 @@ describe('boundaries', () => {
   it('allows nothing more and refuses nothing else', () => {
     expect(found).toEqual(
       [
+        'hooks-talk-through-commands: src/agents/claude/hooks/rule.mjs → src/workflow/plain.mjs',
+        'hooks-talk-through-commands: src/agents/codex/hooks/rule.mjs → src/workflow/plain.mjs',
+        'hooks-talk-through-commands: src/agents/cursor/hooks/rule.mjs → src/workflow/plain.mjs',
         'referee-is-agent-free: src/requirements/indirect-agent.ts → src/agents/claude/deep.mjs',
         'referee-is-agent-free: src/requirements/indirect-agent.ts → src/agents/claude/hook.mjs',
         'referee-is-agent-free: src/workflow/direct-agent.mjs → src/agents/claude/deep.mjs',

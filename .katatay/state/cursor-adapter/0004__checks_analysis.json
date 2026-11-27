@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "seq": 4,
+  "prev": "e298d81146874dc435da2ac10fa6610707f70b608840ce29795405d7307c40d9",
+  "ts": "2026-11-26T23:46:39.188Z",
+  "event": "checks_analysis",
+  "payload": {
+    "verification": 3,
+    "summary": "Verification passed. Most uncovered lines are the Cursor hook and command scripts, which only run as separate processes; the AC0076 and AC0067 acceptance tests run each of them through ktty, so they are exercised but invisible to coverage. Three copied helpers (referee.mjs, runaway.mjs, drift.mjs) can be tested in process and are not: copy the Codex and Claude unit tests for them. Of 118 surviving mutants, about 40 are equivalent (undefined keys dropped by JSON, RegExp of undefined or \"\" matching everything, defensive branches whose fallback gives the same result). The rest point to specific missing unit tests: single-quoted and edge-case plan names, rulebooks with null, {} or a non-string plans.dir, a real missing plans folder, the write-failure message naming the file, unnamed and text-less CreatePlan calls, half-formed referee messages, YAML quoting of skill descriptions, duplicate and misplaced hook registrations in the setup check, acknowledgements that differ by event or command, and malformed transcript parts. One branch in recordBuild (count === 0) is dead and can be simplified. Mutation was partial: 464 mutants were reached by no fast test, nearly all in process-only scripts.",
+    "analysisSnapshot": ".katatay/local/cursor-adapter/checks-analysis/20261126T234639.183Z_x0n1Ha7MOtfUpOEC8zb3ppv7B9rBmnRQMYDOlKVvWDA.txt"
+  }
+}

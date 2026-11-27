@@ -4,7 +4,8 @@
  * which records `reset` and `record` and says where the change is, and puts
  * that in front of Claude for the turn.
  */
-import { input, send, leave } from './io.mjs';
+import { input, standAside, send, leave } from './io.mjs';
+import { runByCursor } from './cursor.mjs';
 import { expectFields } from './drift.mjs';
 import { ask } from './referee.mjs';
 import { VERSION, forPrompt } from './translate.mjs';
@@ -18,6 +19,8 @@ try {
   send({ via: 'context', text: `workflow: state unavailable (${error.message})` });
   await leave();
 }
+// Cursor runs this file too, beside its own adapter's hooks. Leave it to those.
+if (runByCursor(hook)) await standAside();
 expectFields(hook, { prompt: 'the operator could type `record` or `reset` and nothing would hear it' });
 const prompt = typeof hook?.prompt === 'string' ? hook.prompt : '';
 send(forPrompt(ask('prompt', { version: VERSION, prompt })));

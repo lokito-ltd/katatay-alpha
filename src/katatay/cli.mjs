@@ -52,7 +52,7 @@ function dispatch() {
     // The npm source launcher needs INIT_CWD. A binary invoked through PATH
     // always acts on its caller's actual directory, even inside an npm script.
     delete process.env.INIT_CWD;
-    remaining.unshift('--agent', 'claude=ktty agent claude defaults', '--agent', 'codex=ktty agent codex defaults');
+    remaining.unshift('--agent', 'claude=ktty agent claude defaults', '--agent', 'codex=ktty agent codex defaults', '--agent', 'cursor=ktty agent cursor defaults');
   }
   return launch(ROUTES[name], remaining);
 }

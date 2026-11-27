@@ -8,7 +8,8 @@
  * or the shell line a Bash call runs (`toWrite`, in `translate.mjs`). Every
  * lock, and which files need no plan, is the referee's to decide.
  */
-import { input, emit, send, leave } from './io.mjs';
+import { input, standAside, emit, send, leave } from './io.mjs';
+import { runByCursor } from './cursor.mjs';
 import { presentPlan } from '../plans.mjs';
 import { expectFields } from './drift.mjs';
 import { ask } from './referee.mjs';
@@ -24,6 +25,8 @@ try {
   // allowed to be loud.
   await leave();
 }
+// Cursor runs this file too, beside its own adapter's hooks. Leave it to those.
+if (runByCursor(hook)) await standAside();
 
 // Only `tool_name` is checked. The other fields belong to particular tools:
 // `file_path` and `notebook_path` to different edit tools, `command` to Bash.

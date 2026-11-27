@@ -1,0 +1,31 @@
+{
+  "conversation_id": "00000000-0000-4000-8000-000000000001",
+  "generation_id": "00000000-0000-4000-8000-000000000012",
+  "model": "grok-4.7-medium",
+  "model_id": "grok-4.7",
+  "model_params": [
+    {
+      "id": "context",
+      "value": "256k"
+    },
+    {
+      "id": "reasoning_effort",
+      "value": "medium"
+    },
+    {
+      "id": "fast",
+      "value": "false"
+    }
+  ],
+  "composer_mode": "agent",
+  "prompt": "Implement the plan as specified, it is attached for your reference. Do NOT edit the plan file itself.\n\nTo-do's from the plan have already been created. Do not create them again. Mark them as in_progress as you work, starting with the first one. Don't stop until you have completed all the to-dos.",
+  "attachments": [],
+  "session_id": "00000000-0000-4000-8000-000000000001",
+  "hook_event_name": "beforeSubmitPrompt",
+  "cursor_version": "3.32.10",
+  "workspace_roots": [
+    "{{REPO}}"
+  ],
+  "user_email": "operator@example.com",
+  "transcript_path": "{{HOME}}/.cursor/projects/repo/agent-transcripts/00000000-0000-4000-8000-000000000001/00000000-0000-4000-8000-000000000001.jsonl"
+}

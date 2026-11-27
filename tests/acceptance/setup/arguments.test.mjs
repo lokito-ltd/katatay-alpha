@@ -52,7 +52,7 @@ it('A recognized command with invalid arguments runs nothing, exits 2, leaves st
     ['defaults', [], '<adapter command> [arguments]'],
   ])
     cases.push([name, args, 'Usage: ktty ' + name + ' ' + syntax + '.']);
-  for (const adapter of ['claude', 'codex']) {
+  for (const adapter of ['claude', 'codex', 'cursor']) {
     const actions = ['defaults', 'install', 'check', 'pre-tool', 'user-prompt', 'turn-end'];
     if (adapter === 'claude') actions.push('post-tool');
     for (const action of actions)

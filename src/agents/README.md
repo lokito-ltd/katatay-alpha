@@ -1,8 +1,9 @@
 # Agent adapters
 
 The workflow's referee runs the same for every coding agent. Everything one
-agent needs lives in that agent's folder, `claude/` for Claude Code and
-`codex/` for Codex, and the referee imports neither. The
+agent needs lives in that agent's folder, `claude/` for Claude Code,
+`codex/` for Codex and `cursor/` for Cursor, and the referee imports none of
+them. The
 `referee-is-agent-free` rule in `.dependency-cruiser.cjs` enforces that, and
 sees through helper files too. `../adapters/README.md` is the same idea for
 languages, and `../VISION.md` says where it is going.
@@ -10,16 +11,17 @@ languages, and `../VISION.md` says where it is going.
 This file is the contract between the referee and an agent adapter, as it
 stands. `contract.json` beside it is the machine-readable half: every
 command, with its stdin, its stdout and what no answer means, field by field.
-The contract was agreed with the operator on 2026-10-23. The Codex adapter,
-added last, is the proof that a second agent needs no referee edit.
+The contract was agreed with the operator on 2026-10-23. The Codex adapter
+was the proof that a second agent needs no referee edit, and the Cursor
+adapter, added last, needed none either.
 
 ## The parties
 
 | Party | What it is | Who writes it |
 |---|---|---|
 | **Operator** | The person. Approves plans, types `record` and `reset`, merges. | — |
-| **Agent** | Claude Code or Codex. Writes code, runs a shell, calls hooks. | Its vendor |
-| **Agent adapter** | `claude/`, `codex/`. Translates between the agent's hooks and the referee. Holds no workflow rules. May read the rulebook. | Us, one per agent |
+| **Agent** | Claude Code, Codex or Cursor. Writes code, runs a shell, calls hooks. | Its vendor |
+| **Agent adapter** | `claude/`, `codex/`, `cursor/`. Translates between the agent's hooks and the referee. Holds no workflow rules. May read the rulebook. | Us, one per agent |
 | **Referee** | `../workflow/cli/workflow.mjs`. Phases, the logbook, locks, verify, the change report. | Us, once |
 | **Rulebook** | `.katatay/rulebook.json`. Locked paths, the plans folder, switches, the target. The agent cannot write it. | The operator, drafted by `init` |
 | **Language adapter** | Runs the tests and the compiler for the referee. Appears here only inside verify. | Us, one per language |
@@ -29,8 +31,8 @@ added last, is the proof that a second agent needs no referee edit.
 ```mermaid
 flowchart LR
   OP["Operator"]
-  AG["Agent<br/>Claude Code · Codex"]
-  AD["Agent adapter<br/>claude/ · codex/"]
+  AG["Agent<br/>Claude Code · Codex · Cursor"]
+  AD["Agent adapter<br/>claude/ · codex/ · cursor/"]
   CO["Referee<br/>workflow.mjs"]
   PO[("Rulebook")]
   OP <--> AG
@@ -227,6 +229,15 @@ pass each one on as a `warning` message for the operator.
   layer that is not the workflow's own, whatever Codex itself reports about
   its hooks, and `AGENTS.md` missing. A Codex that cannot be started or does
   not answer within 10 seconds is one warning saying nothing is known.
+- **Cursor** (`cursor/check.mjs`) reads the hooks files, because Cursor has
+  nothing a check could ask: the project's `.cursor/hooks.json`, the user's
+  `~/.cursor/hooks.json` and the enterprise file for the platform. It warns
+  about a workflow hook that is missing, has a matcher that misses `Write`,
+  `Delete` or `Shell`, lacks `failClosed`, has a short timeout or a
+  `loop_limit`, about any hook that is not the workflow's own (a stop,
+  subagent-stop or prompt hook as able to send Build's approval), and about
+  `.cursor/rules/workflow.mdc` missing. Team and plugin hooks are in no file
+  it can read, so it cannot see them.
 
   Codex keeps hook trust in `config.toml` as
   `[hooks.state."<hooks.json path>:<event>:<group>:<handler>"]` with a
@@ -263,8 +274,8 @@ invalid, even alongside an adapter map.
 What `init` should propose for this agent. `init` runs before any rulebook
 exists, so it cannot find the command there: it is told which adapter to use
 and starts the adapter's `defaults` command itself
-(`node src/agents/claude/defaults.mjs` or
-`node src/agents/codex/defaults.mjs`). It runs in the project root, and
+(`node src/agents/claude/defaults.mjs`,
+`node src/agents/codex/defaults.mjs` or `node src/agents/cursor/defaults.mjs`). It runs in the project root, and
 reads:
 
 ```json
@@ -293,7 +304,9 @@ and prints:
   git-ignored and a session can write it, so a proposal read from it could be
   steered by a file nobody reviews. `check` warns when the two differ. Codex
   keeps no plan files, so its adapter writes one into whatever folder the
-  rulebook names, and proposes `~/.codex/plans`.
+  rulebook names, and proposes `~/.codex/plans`. Cursor's adapter proposes
+  `~/.cursor/katatay-plans`, because Cursor's own `~/.cursor/plans` is locked
+  and its files open with frontmatter the referee refuses.
 - `instructions` is the file the agent reads the workflow's instructions
   from. `install` writes it, and `check` warns when it is missing.
 - `commands.check` becomes `agent.adapters.<name>.checkCommand`, under the label chosen
@@ -386,6 +399,10 @@ and prints:
   `AGENTS.md`. A project that keeps its own instructions in `CLAUDE.md` can
   add one line to it pointing there, because Codex does not read that file by
   itself.
+- **Cursor** gets `.cursor/rules/workflow.mdc`, a rule with
+  `alwaysApply: true`, and `.cursor/skills/<name>/SKILL.md`. Cursor also
+  reads `AGENTS.md`, so a project set up for Codex too gives it Codex's
+  section as well.
 
 The referee reads the answer with `agentInstall` in `../workflow/agent.mjs`,
 under the same rules as `defaults`. It also refuses a path that is absolute,
@@ -419,7 +436,8 @@ What the adapter has to work out, because only it knows its agent:
   the repository root, with `delete` true for a removal. Empty for a shell
   call. A Claude edit names one file and never deletes. A Codex patch names
   one or more, and a move is two: the new path, and a delete of the old one,
-  because moving a requirement out of its folder deletes it there.
+  because moving a requirement out of its folder deletes it there. A Cursor
+  `Write` names one file, and a `Delete` one file with `delete` true.
 - `command`: the shell line, as the agent sent it, or `null`.
 
 The adapter decides nothing about the files. The referee decides, in this
@@ -503,7 +521,7 @@ fails closed: every file write is denied, since which files are safe is the
 referee's to say, and a shell command is allowed, so the shell is still there
 to find out what broke. The prompt context says the state is unavailable, an
 approval says it was not recorded, and a turn end says nothing was verified and
-refuses the stop. Both adapters do this in their `hooks/translate.mjs`.
+refuses the stop. Every adapter does this in its `hooks/translate.mjs`; Cursor's, which cannot refuse a stop, sends the failure back as a follow-up.
 
 ## Plan files
 
@@ -534,6 +552,12 @@ referee answers `stop`.
   keeps one plan file per session, so a revised plan overwrites the file of
   the approval before it. Each new approval keeps its own snapshot, even when
   the working path is reused.
+- **Cursor** saves each plan to `~/.cursor/plans/` with frontmatter, and
+  rewrites its todo statuses later. At Build its adapter finds the plan the
+  transcript names, takes the saved copy's text without the frontmatter, the
+  operator's editor edits included, and writes it to a new three-word file in
+  `plans.dir`. At the turn end it saves a plan proposed in the turn the same
+  way, for the courtesy check.
 - **Codex** keeps no plan files. Its adapter reads `plans.dir` from the
   rulebook, captures the completed Plan item from the current turn at Stop,
   and sends its saved path to the referee for validation. It also saves the
@@ -780,6 +804,51 @@ hooks in Codex's `/hooks`. Codex's sandbox also keeps `.git` and `.codex`
 read-only, which is a second layer and not a replacement: the sandbox is the
 operator's to switch off.
 
+### Cursor
+
+Settled by a capture under Cursor 3.32.10 on 2026-11-26, in `tests/fixtures/cursor/`.
+
+| Hook | Matcher | Moment | Fields read | Answer written |
+|---|---|---|---|---|
+| `preToolUse` | `Write\|Delete\|Shell`, `failClosed: true` | `on write` | `tool_name`, `tool_input.file_path`, `tool_input.command`, `workspace_roots` | `permission: "deny"` + `agent_message` and `user_message`, or `{}` |
+| `beforeSubmitPrompt` | — | `on plan-approved` when `prompt` is Build's, then `on prompt` | `prompt`, `transcript_path`, `workspace_roots` | `continue: true` + `additional_context` |
+| `stop` | — | `on turn-end` | `loop_count`, `transcript_path`, `workspace_roots` | `followup_message`, or `{}` |
+
+What the capture settled, and where it differed from the documentation:
+
+- **Edits.** Every file edit is `Write`, with the absolute `file_path` and the
+  whole new `content`. A removal is `Delete`. A shell call is `Shell`, with
+  `tool_input.command` and an empty `cwd`. A read is `Read`, which the matcher
+  leaves out. Another edit tool would pass the gate, and the freeze check at the
+  turn end would still catch its edit.
+- **`{}` lets a call go on.** Every Claude Code hook Cursor ran answered `{}`
+  beside the capture hook's answer, and every call went on. The pre-tool hook
+  never answers `permission: "allow"`, which could answer a question Cursor
+  would otherwise ask the operator.
+- **Prompt context works.** The documentation lists only `continue` and
+  `user_message` for `beforeSubmitPrompt`. The agent received the
+  `additional_context` the capture hook answered with.
+- **The approval.** `CreatePlan` reaches no hook. Build sends a prompt that
+  starts `Implement the plan as specified, it is attached for your reference.`,
+  with `composer_mode: "agent"` and no attachments. The transcript, as
+  `{ role, message }` lines, holds the `CreatePlan` call with `name` and
+  `plan`. Cursor's saved copy is `~/.cursor/plans/<slug>_<hash>.plan.md`, with
+  frontmatter `name`, `overview`, `todos` and `isProject`.
+- **Stop.** A `followup_message` arrives as a new prompt, through
+  `beforeSubmitPrompt`, and the next `stop` has `loop_count: 1`. Nothing the
+  capture found is shown to the operator, so reports go to the agent to post.
+- **Claude Code's hooks.** Cursor ran each hook in `.claude/settings.json`
+  beside its own, with Cursor's payload, `cursor_version` included. Claude's
+  hooks answer `{}` when they see that field (`claude/hooks/cursor.mjs`).
+
+Defaults, in `cursor/proposal.mjs`: locked `.cursor/hooks.json`,
+`.cursor/hooks/**`, `~/.cursor/hooks.json`, `~/.cursor/plans/**` and
+`~/.cursor/projects/**`; plans folder `~/.cursor/katatay-plans`; instructions
+`.cursor/rules/workflow.mdc`; commands `check` and `install`; the three hooks
+above as the registration, in `.cursor/hooks.json`, with a stop timeout of 900
+and `loop_limit: null`. The operator then trusts the workspace, because Cursor
+runs no project hook in an untrusted one.
+
 ## What is in each adapter
 
 | Path | What it is |
@@ -790,18 +859,23 @@ operator's to switch off.
 | `codex/patch.mjs` | The files a patch writes, from its headers |
 | `codex/approval.mjs` | The supported approval prompts, the plan in a transcript or a prompt, the new plan file, and recording the approval |
 | `codex/app-server.mjs`, `codex/setup.mjs`, `codex/registration.mjs` | Asking Codex's app server, turning its answers into the check's warnings, and the hooks the workflow registers |
+| `cursor/hooks/` | The three scripts Cursor runs (`pre-tool`, `user-prompt`, `turn-end`), and the same helpers as Codex's, in Cursor's shapes |
+| `cursor/approval.mjs`, `cursor/transcript.mjs`, `cursor/plans.mjs` | Build's prompt, the plan in a transcript and in Cursor's saved copy, the new plan file, and the plan captured at the turn end |
+| `cursor/setup.mjs`, `cursor/registration.mjs` | Reading the hooks files into the check's warnings, and the hooks the workflow registers |
+| `claude/hooks/cursor.mjs` | Whether Cursor started a Claude Code hook, which then answers nothing |
 | `*/check.mjs` | The `check` command |
 | `*/defaults.mjs`, `*/proposal.mjs` | The `defaults` command, and the proposal it prints, as a plain function so tests run it in process |
 | `*/install.mjs`, `*/install-files.mjs` | The `install` command, and the files it answers, as a plain function |
 
 The payloads captured from live sessions, with the README on recapturing
-them, are test fixtures: `tests/fixtures/claude/` and `tests/fixtures/codex/`.
+them, are test fixtures: `tests/fixtures/claude/`, `tests/fixtures/codex/` and
+`tests/fixtures/cursor/`.
 
 Each adapter stands alone, and copies the little plumbing it shares with the
 other instead of importing it. Each is meant to ship on its own, and their
 agents' output shapes differ. The hooks hold no workflow rules: the
 `hooks-talk-through-commands` rule in `.dependency-cruiser.cjs` stops the
-hooks of either adapter importing the referee. What a hook decides sits in a
+hooks of any adapter importing the referee. What a hook decides sits in a
 plain function, tested in process, because a hook script runs in a process of
 its own where coverage cannot see it.
 
@@ -813,7 +887,7 @@ Everything the hooks used to decide is in the referee, under
 
 ## Locks
 
-The referee decides every lock, and no file in `claude/` or `codex/` is
+The referee decides every lock, and no file in `claude/`, `codex/` or `cursor/` is
 locked. Each agent's own settings and hooks are, through the rulebook's
 `agent.lockedPaths`. The lock code itself, `../workflow/locks.mjs`, is as editable
 as the rest of `src/`. The Claude

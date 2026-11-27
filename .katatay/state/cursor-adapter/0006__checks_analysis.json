@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "seq": 6,
+  "prev": "1cb44fc369c59d7362be9e1b2066e774edeb957340a774c914221c17804a31fa",
+  "ts": "2026-11-27T00:03:18.089Z",
+  "event": "checks_analysis",
+  "payload": {
+    "verification": 5,
+    "summary": "Verification passed. Since verification 3, tests were added for every surviving mutant with an observable effect and for the copied referee, runaway and drift helpers, which are now covered. Mutation was not measured again: its results are reused from verification 3, so the survivors below are the earlier tree's, and each now has the test named under it. Run workflow mutate to confirm they are killed. Earlier findings follow. Most uncovered lines are the Cursor hook and command scripts, which only run as separate processes; the AC0076 and AC0067 acceptance tests run each of them through ktty, so they are exercised but invisible to coverage. Of 118 surviving mutants, about 40 are equivalent (undefined keys dropped by JSON, RegExp of undefined or \"\" matching everything, defensive branches whose fallback gives the same result). The rest had specific missing unit tests, now written: single-quoted and edge-case plan names, rulebooks with null, {} or a non-string plans.dir, a real missing plans folder, the write-failure message naming the file, unnamed and text-less CreatePlan calls, half-formed referee messages, YAML quoting of skill descriptions, duplicate and misplaced hook registrations in the setup check, acknowledgements that differ by event or command, and malformed transcript parts. One branch in recordBuild (count === 0) is dead and can be simplified. Mutation was partial: 464 mutants were reached by no fast test, nearly all in process-only scripts.",
+    "analysisSnapshot": ".katatay/local/cursor-adapter/checks-analysis/20261127T000318.085Z_w_2GuzeKFjOC4lSY6532T4A6fcl_-V5N1vIu2eyCgRM.txt"
+  }
+}

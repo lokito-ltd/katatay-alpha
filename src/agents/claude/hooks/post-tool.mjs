@@ -33,7 +33,8 @@
  * same payload was the only thing that ever exercised it.
  */
 import { readFileSync, writeFileSync } from 'node:fs';
-import { input, emit, send, leave } from './io.mjs';
+import { input, standAside, emit, send, leave } from './io.mjs';
+import { runByCursor } from './cursor.mjs';
 import { expectFields } from './drift.mjs';
 import { ask } from './referee.mjs';
 import { VERSION, forPlanApproved } from './translate.mjs';
@@ -63,6 +64,8 @@ try {
   emit({ systemMessage: `The plan was approved, but the workflow hook failed to record it: ${error.message}` });
   await leave();
 }
+// Cursor runs this file too, beside its own adapter's hooks. Leave it to those.
+if (runByCursor(hook)) await standAside();
 // `plan` has its own message below, written for the operator rather than for
 // whoever maintains the hooks, so it is not repeated here.
 expectFields(hook, { 'tool_response.filePath': 'no approval is recorded, because the workflow reads the approved plan from that file' });

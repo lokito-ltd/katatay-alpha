@@ -14,7 +14,7 @@ ktty version
 
 The version command prints the Katatay release and the rulebook schema. `ktty path` prints the absolute folder the package is installed in, so a project can name the TypeScript adapter's files, such as `"$(ktty path)/src/adapters/typescript/vitest-junit-reporter.js"`. The global install script puts the setup skill in the Claude Code and Codex user skill directories. It respects CLAUDE_CONFIG_DIR and CODEX_HOME. If a different ktty-init skill already exists, the installer reports its location and preserves the file.
 
-Open a new Claude Code or Codex session in the Git project and ask it to use the **ktty-init** skill to set up Katatay. It interviews you about your tools, proves the checks with passing and failing examples, then runs `ktty init` and shows the operator steps, including hook trust. For manual setup, run `ktty init` in a terminal or use `ktty init --questions` to see the available settings.
+Open a new Claude Code or Codex session in the Git project and ask it to use the **ktty-init** skill to set up Katatay. It interviews you about your tools, proves the checks with passing and failing examples, then runs `ktty init` and shows the operator steps, including hook trust. The install does not yet put the skill in Cursor's skill folder, so in Cursor run `ktty init` in a terminal. For manual setup, run `ktty init` in a terminal or use `ktty init --questions` to see the available settings.
 
 After setup, run `ktty verify` in the project. To use the project in a new checkout or on another machine, install the same tarball there and make ktty available on PATH to the agents.
 

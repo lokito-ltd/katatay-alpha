@@ -22,7 +22,7 @@ import { code, referee, withoutComments } from '../../tests/fixtures/workflow/re
 import { INSTRUCTIONS, SKILLS, readSkills } from './install.mjs';
 
 /** Words that belong to one agent: its tools, its folders, its name. */
-const AGENT_ONLY = /EnterPlanMode|ExitPlanMode|\bClaude\b|\bCodex\b|\bplan[- ]mode\b|\bmemory notes?\b|\.claude\b|\.codex\b|\bAGENTS\.md\b/i;
+const AGENT_ONLY = /EnterPlanMode|ExitPlanMode|CreatePlan|\bClaude\b|\bCodex\b|\bCursor\b|\bplan[- ]mode\b|\bmemory notes?\b|\.claude\b|\.codex\b|\.cursor\b|\bAGENTS\.md\b/i;
 
 /** The same, with skills: a message that sends the agent to a skill would
  *  make the referee depend on one. */

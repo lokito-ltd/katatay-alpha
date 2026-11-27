@@ -102,6 +102,7 @@ describe('the tool modules', () => {
   const STARTS_OTHER_PROGRAMS = [
     'agents/claude/hooks/referee.mjs', // node, to start the referee's moment commands
     'agents/codex/hooks/referee.mjs', // node, the same, for the Codex hooks
+    'agents/cursor/hooks/referee.mjs', // node, the same, for the Cursor hooks
     'agents/init.mjs', // node, to start the referee's init with every adapter
     'agents/codex/app-server.mjs', // codex, to ask its app server about hooks and settings
     'workflow/agent.mjs', // the shell, for the command the agent section names

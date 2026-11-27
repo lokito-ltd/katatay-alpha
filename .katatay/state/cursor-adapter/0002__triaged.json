@@ -1,0 +1,50 @@
+{
+  "version": 1,
+  "seq": 2,
+  "prev": "4fbab5ba76cb19268978e94250a3bab9af7a2bece6cdcbf04b15b0a0c3b39d67",
+  "ts": "2026-11-26T23:22:36.160Z",
+  "event": "triaged",
+  "payload": {
+    "treeFingerprint": "ea34cedcc2aa4f0b293e9eba0c44bd941ce1bfd9e637716c2d3a9fe324f8d41d",
+    "implementationFingerprint": "f76d068673f9ad3f44ef51f2f4bb008df1ac8e4eb8bd5eba2ac6ed9df27b7ccc",
+    "level": "HIGH",
+    "reasons": [
+      "Raised to HIGH by surprise failures: 2 against 4 predicted, 20% or more."
+    ],
+    "evidence": [
+      {
+        "role": "raw",
+        "title": "JUnit: reports/junit/fast.xml",
+        "snapshot": ".katatay/local/cursor-adapter/junit/20261126T232235.784Z_SnjIEgmXzZkLmqg8vAsJyyiIBOwNe9_d6-nrXp4FwcY.xml"
+      },
+      {
+        "role": "raw",
+        "title": "JUnit: reports/junit/slow.xml",
+        "snapshot": ".katatay/local/cursor-adapter/junit/20261126T232235.787Z_435OTaohpG5xReB6sHaAfXxyXsfmp3-cLFtmp5KV5JI.xml"
+      },
+      {
+        "role": "analysis",
+        "title": "Triage analysis",
+        "snapshot": ".katatay/local/cursor-adapter/triage/20261126T232236.158Z_GfIAanJKrJ3BArym_Mzdg1maADIm43gnnMeedd-W1m0.json"
+      }
+    ],
+    "testCount": 4584,
+    "predicted": {
+      "failed": 4,
+      "total": 4
+    },
+    "surprise": {
+      "failed": 2,
+      "total": 4623
+    },
+    "overPredicted": {
+      "count": 0,
+      "total": 4
+    },
+    "notRun": {
+      "predicted": 0,
+      "unpredicted": 0
+    },
+    "implemented": true
+  }
+}

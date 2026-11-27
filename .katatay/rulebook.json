@@ -51,7 +51,12 @@
       ".codex/**",
       "~/.codex/config.toml",
       "~/.codex/hooks.json",
-      "~/.codex/sessions/**"
+      "~/.codex/sessions/**",
+      ".cursor/hooks.json",
+      ".cursor/hooks/**",
+      "~/.cursor/hooks.json",
+      "~/.cursor/plans/**",
+      "~/.cursor/projects/**"
     ],
     "adapters": {
       "claude": {
@@ -75,6 +80,13 @@
       },
       "codex": {
         "checkCommand": "node src/agents/codex/check.mjs",
+        "extraHooks": {
+          "check": true,
+          "acknowledged": []
+        }
+      },
+      "cursor": {
+        "checkCommand": "node src/agents/cursor/check.mjs",
         "extraHooks": {
           "check": true,
           "acknowledged": []

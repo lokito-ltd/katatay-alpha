@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "seq": 6,
+  "prev": "a849dbb3a28c22c307e03c08bc42549447dc1f100972618aeb311d6b699f310c",
+  "ts": "2026-11-27T20:28:36.792Z",
+  "event": "checks_analysis",
+  "payload": {
+    "verification": 5,
+    "summary": "No further tests are recommended. The 33 survivors come from verification 3's mutation run, reused and not measured again, so they do not count the tests added since. Those tests now cover the 8 real gaps: a count of 12 commits, the numeric pre-releases 1.0.0-1 and 1.0.0-10, the identifier 1a, the later identifiers rc.10, rc.2b and rc.beta, and a description with text before the v. The staged package.json is also checked to end with one newline. Re-applying each of those 9 mutants by hand against the new cases changes a result. 17 survived only because the two regular expressions in release.mjs are built when the module loads, before Stryker switches a mutant on; the existing cases catch each one when it is applied by hand. Moving the regexes into releaseFromDescription would let mutation measure them, but it is an implementation change that needs a revised plan, and it is the operator's call. 7 have no observable effect: an empty encoding or stdio entry gives Node's defaults. To measure the new tests for real, the operator can run workflow mutate.",
+    "analysisSnapshot": ".katatay/local/build-and-sign/checks-analysis/20261127T202836.789Z_qqcp1Nei9zveoLVkEU-oTAQ6zaYLTn6KwN1VNDd00fc.txt"
+  }
+}

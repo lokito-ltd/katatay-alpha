@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import { basename, dirname, join, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import ts from 'typescript-api';
+import { describedRelease } from '../src/katatay/release.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const stage = mkdtempSync(join(tmpdir(), 'katatay-pack-'));
@@ -82,6 +83,12 @@ try {
   }
   stageFile('src/agents/contract.json');
   stageDependencies();
+  // The manifest's version is a placeholder: the git tags name the release.
+  // Asked last, so a missing dependency is still the error a broken install
+  // reports first.
+  const release = JSON.parse(readFileSync(join(stage, 'package.json'), 'utf8'));
+  release.version = describedRelease(root);
+  writeFileSync(join(stage, 'package.json'), JSON.stringify(release, null, 2) + '\n');
   mkdirSync(dest, { recursive: true });
   execFileSync('npm', ['pack', '--ignore-scripts', '--pack-destination', dest, '--quiet'], { cwd: stage, stdio: 'inherit' });
 } finally {

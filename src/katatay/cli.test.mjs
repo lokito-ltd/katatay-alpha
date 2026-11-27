@@ -39,6 +39,14 @@ it('labels the package release and rulebook schema independently', async () => {
   expect(runReferee).not.toHaveBeenCalled();
 });
 
+it('prints why the release is unknown on stderr and exits 1, printing no version', async () => {
+  releaseVersion.mockImplementation(() => { throw new Error('Katatay cannot tell its release: no tag.'); });
+  expect(await invoke('version')).toBe(1);
+  expect(console.error).toHaveBeenCalledWith('Katatay cannot tell its release: no tag.');
+  expect(console.error).toHaveBeenCalledOnce();
+  expect(console.log).not.toHaveBeenCalled();
+});
+
 it.each([['agent', 'codex'], ['agent', 'other', 'check'],
   ['agent', 'codex', '../defaults'], ['agent', 'codex', 'post-tool']])('refuses invalid arguments %s %s %s before launching a child', async (...args) => {
   expect(await invoke(...args)).toBe(2);

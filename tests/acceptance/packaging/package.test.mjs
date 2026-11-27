@@ -1,6 +1,6 @@
 import { it } from 'vitest';
 import { join } from 'node:path';
-import { thenItExits } from '../support/ktty.mjs';
+import { thenItExits, thenItPrintsLines } from '../support/ktty.mjs';
 import {
   thenValueIs, thenValuesEqual, thenContains, thenTextMatches, thenStderrContains,
 } from '../support/assertions.mjs';
@@ -102,8 +102,7 @@ it('The installed ktty version prints the release in the package. [AC0074.6]', (
   const version = whenInstalledKttyRuns(machine, ['version']);
 
   thenItExits(version, 0);
-  thenValueIs(version.stderr, '');
-  thenTextMatches(version.stdout, new RegExp(`^Katatay ${release.replaceAll('.', '\\.')}\\nSchema \\d+\\n$`));
+  thenItPrintsLines(version, [`Katatay ${release}`, /^Schema \d+$/]);
 }, INSTALL);
 
 it('The installed ktty path prints the folder the package is installed in. [AC0074.7]', () => {

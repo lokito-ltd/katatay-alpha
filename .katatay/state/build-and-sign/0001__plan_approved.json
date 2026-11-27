@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "seq": 1,
+  "prev": null,
+  "ts": "2026-11-27T19:57:10.693Z",
+  "event": "plan_approved",
+  "payload": {
+    "proposal": "50e0f642cab1f9f406a260890e04d20311837d90f4d606c78774388cd85543bd",
+    "testOnly": false,
+    "requirementChanges": [],
+    "planSnapshot": ".katatay/local/build-and-sign/plans/20261127T195710.685Z_UOD2Qsqx-fQGomCJDgTSAxGDfZD01gbHh3Q4jNhVQ70.md",
+    "baseline": "f9dc55e49ac0acacad227bad30b8a016163dec14"
+  },
+  "branch": "build-and-sign"
+}

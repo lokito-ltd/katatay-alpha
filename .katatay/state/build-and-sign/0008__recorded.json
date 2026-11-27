@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "seq": 8,
+  "prev": "29eceb0ecda2ff298145738ce36bcf72724b0c7558c4ee2ec68392ec43b1e5c2",
+  "ts": "2026-11-27T23:19:55.219Z",
+  "event": "recorded",
+  "payload": {
+    "treeFingerprint": "ec03a1be685fb5853f4ef8070eaf02988837c5e34cd081eef371df97f14f516c",
+    "changes": "23ce906817e2465d632b3ae2ffc39b45ca217db82b88ecec2146085c0b0db686",
+    "files": [
+      "requirements/changes/20261127T231852Z__build_and_sign.md"
+    ]
+  }
+}

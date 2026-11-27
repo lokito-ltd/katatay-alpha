@@ -24,7 +24,7 @@ const adapterSourceOnly = [
   'src/adapters/typescript/notes.md',
 ];
 
-let workspace, root, scratch, npm;
+let workspace, root, scratch, npm, git;
 const text = path => readFileSync(path, 'utf8');
 function fixture(path, contents = path) {
   mkdirSync(dirname(join(root, path)), { recursive: true });
@@ -58,8 +58,13 @@ beforeEach(() => {
   vi.resetModules();
   vi.doMock('node:url', async original => ({ ...await original(), fileURLToPath: () => root }));
   vi.doMock('node:os', async original => ({ ...await original(), tmpdir: () => scratch }));
+  // git names the release; npm packs it. Each gets its own fake.
   npm = vi.fn();
-  vi.doMock('node:child_process', async original => ({ ...await original(), execFileSync: npm }));
+  git = vi.fn(() => 'v1.2.3-4-gabc1234\n');
+  vi.doMock('node:child_process', async original => ({
+    ...await original(),
+    execFileSync: (program, ...rest) => (program === 'git' ? git : npm)(program, ...rest),
+  }));
 });
 
 afterEach(() => {
@@ -85,7 +90,8 @@ it('hands npm runnable JavaScript, release metadata, the licence, adapter assets
     expect(createRequire(join(stage, 'package.json'))('runtime')).toEqual(['1.0.0', '2.0.0']);
     expect(existsSync(join(stage, 'node_modules/unrelated'))).toBe(false);
     expect(existsSync(join(stage, 'node_modules/plugin/node_modules/unrelated'))).toBe(false);
-    expect(text(join(stage, 'package.json'))).toBe(text(join(root, 'packaging/katatay/package.json')));
+    expect(JSON.parse(text(join(stage, 'package.json'))))
+      .toEqual({ ...JSON.parse(text(join(root, 'packaging/katatay/package.json'))), version: '1.2.3+4.gabc1234' });
     expect(text(join(stage, 'README.md'))).toBe('packaging/katatay/README.md');
     expect(text(join(stage, 'LICENSE'))).toBe('LICENSE');
     expect(new Script(text(join(stage, 'src/workflow/cli/probe.js'))).runInNewContext()).toBe(42);
@@ -98,6 +104,31 @@ it('hands npm runnable JavaScript, release metadata, the licence, adapter assets
   expect(npm).toHaveBeenCalledOnce();
   expect(existsSync(stage)).toBe(false);
   expect(existsSync(join(root, 'node_modules'))).toBe(true);
+});
+
+it('stamps the release git describes for the checkout into the packed manifest', async () => {
+  git.mockReturnValue('v0.2.0-0-gabc1234\n');
+  let manifest, written;
+  npm.mockImplementation((_program, _args, { cwd }) => {
+    written = text(join(cwd, 'package.json'));
+    manifest = JSON.parse(written);
+  });
+  await import('./pack.mjs');
+  expect(git).toHaveBeenCalledOnce();
+  expect(git).toHaveBeenCalledWith('git', ['describe', '--tags', '--match', 'v*', '--long', '--dirty'], expect.objectContaining({ cwd: root }));
+  expect(manifest.version).toBe('0.2.0');
+  expect(manifest.name).toBe('katatay');
+  expect(written).toBe(`${JSON.stringify(manifest, null, 2)}\n`);
+});
+
+it('refuses to pack a checkout with no release tag before npm runs, and cleans its staging directory', async () => {
+  git.mockImplementation(() => { throw new Error('fatal: No names found, cannot describe anything.'); });
+  await expect(import('./pack.mjs')).rejects.toThrow(
+    `Katatay cannot tell its release: git found no v* tag in ${root}. Fetch the tags with 'git fetch --tags'.`,
+  );
+  expect(npm).not.toHaveBeenCalled();
+  expect(readdirSync(scratch)).toEqual([]);
+  expect(existsSync(join(root, 'dist'))).toBe(false);
 });
 
 it('packs into the folder KATATAY_PACK_DESTINATION names, and creates it', async () => {

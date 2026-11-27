@@ -292,6 +292,48 @@ saying why. An inline `gitleaks:allow` comment puts its file under "Must look".
 The README and `.github/workflows/verify.yml` both name the gitleaks version;
 change them together.
 
+## Releasing here
+
+The git tags name the release. Nothing in the tree holds a version:
+`packaging/katatay/package.json` says `0.0.0`, a placeholder nobody edits.
+`npm run pack:katatay` and `ktty version` in a source checkout ask
+`git describe` instead, through `describedRelease` in
+`src/katatay/release.mjs`. On a release tag with a clean tree the version is
+the tag's, such as `0.2.0`. Any other tree adds SemVer build metadata saying
+how far it is from that tag: `0.2.0+3.gabc1234`, and `.dirty` for uncommitted
+edits. Both fail, naming `git fetch --tags`, when no `v*` tag is in reach.
+
+The version comes from tags because a bump in a file would need a pull request
+per release, and every pull request here pays the full workflow. A run id or
+run number was rejected: a re-run keeps the same run id, and neither says which
+code was built. The tarball is not promised to be byte-for-byte reproducible
+across machines, so the version names the source, and the attestation names
+the exact file by its hash.
+
+`.github/workflows/build.yml` builds the tarball for every pull request,
+every push to `main` and every `v*` tag. Pushes and tags are signed with a
+GitHub artifact attestation; pull requests are not, because a fork's pull
+request gets no signing identity. A tag also publishes a GitHub Release with
+the tarball under its versioned name and as `katatay.tgz`, which the README's
+install command downloads from the latest release.
+
+To release, once the last change is merged:
+
+```bash
+git fetch origin
+git tag -a v0.2.0 origin/main -m "Katatay 0.2.0"
+git push origin v0.2.0
+```
+
+The workflow refuses a tag that is not on `main`, or whose tarball's version
+differs from the tag. Delete the tag, fix the cause with an ordinary change,
+and tag again. A tag with a pre-release, such as `v0.3.0-rc.1`, makes a GitHub
+pre-release, which the latest-release link skips.
+
+Branch protection does not cover tags. A tag ruleset on GitHub, for `v*`,
+lets only the operator create release tags and blocks moving or deleting them.
+Without it, anyone who can push can publish a release.
+
 ## The harness in this repository
 
 The **referee** is everything under `src/` except `src/adapters/` and

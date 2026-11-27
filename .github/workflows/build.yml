@@ -1,0 +1,126 @@
+# Builds the release tarball for every change, signs what reaches main, and
+# publishes a GitHub Release for every v* tag.
+#
+# The version comes from the git tags (see src/katatay/release.mjs): on a
+# release tag it is the tag's version, such as 0.2.0, and on any other commit
+# it adds how far the commit is from the tag, such as 0.2.0+3.gabc1234. So a
+# release is a pushed tag, with no pull request to bump a number.
+#
+# The signature is a GitHub artifact attestation. GitHub gives the job a
+# short-lived identity, Sigstore signs with it, and nobody holds a key that
+# could leak. Anyone can check a tarball with
+#
+#   gh attestation verify katatay-0.2.0.tgz --repo lokito-ltd/katatay-alpha
+#
+# Tags are the source of truth for releases, and branch protection does not
+# cover them. A tag ruleset on GitHub (Settings → Rules → Rulesets, target
+# tags v*) lets only the operator create them and blocks moving or deleting
+# them. Without it, anyone who can push can publish a release.
+
+name: build
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+# A newer push to the same pull request makes the older build pointless. A push
+# to main or a tag never waits on another one: GitHub cancels a run that is
+# still pending in its concurrency group, so two merges close together would
+# lose the first one's signed build. A run id is unique, so each push is a
+# group of its own.
+concurrency:
+  group: build-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+# Actions are pinned by commit, with the release they are in a comment, so a
+# moved tag cannot change what runs here.
+
+jobs:
+  # Pull requests build but do not sign. A pull request from a fork gets no
+  # signing identity, and only merged code should carry a signature.
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    outputs:
+      version: ${{ steps.built.outputs.version }}
+    steps:
+      # The full history brings the tags, which name the version.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run pack:katatay
+      - name: Read the built version
+        id: built
+        run: |
+          archive=$(ls dist/katatay-*.tgz)
+          version=$(tar -xzOf "$archive" package/package.json | node -p 'JSON.parse(require("fs").readFileSync(0, "utf8")).version')
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "Built $archive, version $version"
+      # A release must be merged code, and its tarball must name exactly the
+      # tag. A tree that changed during the build, or a second tag on the same
+      # commit, gives another version and stops the release here.
+      - name: Check the release tag
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          VERSION: ${{ steps.built.outputs.version }}
+        run: |
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
+            echo "::error::Tag $GITHUB_REF_NAME is not on main."
+            exit 1
+          fi
+          if [ "$VERSION" != "${GITHUB_REF_NAME#v}" ]; then
+            echo "::error::The tarball's version $VERSION does not match the tag $GITHUB_REF_NAME."
+            exit 1
+          fi
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: katatay-${{ steps.built.outputs.version }}
+          path: dist/katatay-*.tgz
+          if-no-files-found: error
+      - name: Sign the tarball
+        if: github.event_name == 'push'
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: dist/katatay-*.tgz
+
+  # The tarball goes up twice: under its versioned name, and as katatay.tgz,
+  # which the README's install command downloads from the latest release. The
+  # two are the same bytes, so the attestation covers both. A tag with a
+  # pre-release, such as v0.3.0-rc.1, makes a pre-release, which "latest"
+  # skips.
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: katatay-${{ needs.build.outputs.version }}
+          path: dist
+      - name: Publish the GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          VERSION: ${{ needs.build.outputs.version }}
+        run: |
+          cp "dist/katatay-$VERSION.tgz" dist/katatay.tgz
+          prerelease=()
+          case "$VERSION" in *-*) prerelease=(--prerelease) ;; esac
+          gh release create "$GITHUB_REF_NAME" --verify-tag --title "Katatay $VERSION" --generate-notes "${prerelease[@]}" \
+            "dist/katatay-$VERSION.tgz" dist/katatay.tgz
